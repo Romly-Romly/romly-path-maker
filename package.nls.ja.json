@@ -1,0 +1,18 @@
+{
+	"baseDirectory": "**設定する必要はありません。内部で使用されます。** 基準ディレクトリを設定したときにこの値に保存されます。",
+	"groupDirectories": "ディレクトリとファイルを分けて表示する。",
+	"showDirectoryIcons": "ディレクトリアイコンを表示する。",
+	"showHiddenFiles": "隠しファイルを表示する。",
+	"startDirectory": "コマンドを呼び出したときに最初に表示されるディレクトリです。",
+	"startDirectory.lastDirectory": "最後に表示したディレクトリ。最後に表示したディレクトリがない場合はワークスペースのディレクトリ、または編集中のファイルのディレクトリ、またはユーザーのホームディレクトリになります。",
+	"startDirectory.workspaceDirectory": "ワークスペースのディレクトリ。ワークスペースのディレクトリが見つからない場合は編集中のファイルのディレクトリ、編集中のファイルがない場合はホームディレクトリになります。",
+	"startDirectory.editingFileDirectory": "編集中のファイルのディレクトリ。編集中のファイルがない場合はホームディレクトリになります。",
+	"startDirectory.userDirectory": "ユーザーのホームディレクトリ。",
+	"lastDirectory": "**設定する必要はありません。内部で使用されます。** `StartDirectory` を `Last` に設定したときにこの値が使用されます。",
+	"defaultAction": "ファイルを選択した時の処理。",
+	"defaultAction.open": "ファイルをエディターで開く。",
+	"defaultAction.copy": "パスをクリップボードにコピーする。",
+	"defaultAction.terminal": "パスをアクティブなターミナルに挿入する。",
+	"defaultAction.reveal": "ファイルのあるディレクトリをエクスプローラーまたはファインダーで表示する。",
+	"hideUserName": "パスの中にあるユーザー名のディレクトリを隠す。"
+}

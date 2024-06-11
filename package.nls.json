@@ -1,0 +1,18 @@
+{
+	"baseDirectory": "**You don't have to set this. It's used internally.** When the base directory set, it will be stored in this value.",
+	"groupDirectories": "Display directories and files separately.",
+	"showDirectoryIcons": "Show directory icons.",
+	"showHiddenFiles": "Show hidden files.",
+	"startDirectory": "The first directory to be displayed when the command is executed.",
+	"startDirectory.lastDirectory": "The last displayed directory. If there is no last displayed directory, it will be the workspace directory, or the directory of the editing file, or the user's home directory.",
+	"startDirectory.workspaceDirectory": "Workspace directory. If the workspace directory is not found, the directory of the editing file is used. If the editing file is not found, the home directory is used.",
+	"startDirectory.editingFileDirectory": "Editing file's directory. If the editing file is not found, the home directory is used.",
+	"startDirectory.userDirectory": "User's home directory.",
+	"lastDirectory": "**You don't have to set this. It's used internally.** When `StartDirectory` is `Last`, this value is used.",
+	"defaultAction": "The action when the file is selected.",
+	"defaultAction.open": "Open the file in editor.",
+	"defaultAction.copy": "Copy file path to clipboard.",
+	"defaultAction.terminal": "Insert file path to active terminal.",
+	"defaultAction.reveal": "Reveal file in the File Explorer or Finder.",
+	"hideUserName": "Mask the directory name of the user name in the pathes."
+}
