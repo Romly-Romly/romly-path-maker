@@ -95,6 +95,16 @@ const i18n =
 		'ja': '基準ディレクトリを設定できませんでした',
 		'en': "Couldn't set base directory",
 	},
+	'openDirectoryAsWorkspace':
+	{
+		'ja': 'このディレクトリをCodeで開く',
+		'en': 'Open directory in Code',
+	},
+	'error.couldntOpenWorkspace':
+	{
+		'ja': 'ディレクトリを開けませんでした',
+		'en': "Couldn't open directory",
+	},
 };
 
 /**

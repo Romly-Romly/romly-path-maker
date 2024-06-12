@@ -39,6 +39,7 @@ const COMMAND_ID_SET_BASE_DIRECTORY = 'set_base_directory';
 const COMMAND_ID_CLEAR_BASE_DIRECTORY = 'clear_base_directory';
 const COMMAND_ID_GOTO_DIR = 'goto_dir';
 const COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
+const COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE = 'open_directory_as_workspace';
 
 // 内部で使用しているQuickPickItemそれぞれのボタンの識別子。文字列は識別のみなので何でもおけ。
 const BUTTON_ID_REVEAL_IN_FILE_EXPLORER = 'reveal';
@@ -551,6 +552,9 @@ function createQuickPickItems(directory: string): MyQuickPickItem[]
 
 		// ユーザーのディレクトリへ移動するコマンド
 		addGotoDirectoryItem(quickPickItems, directory, 'gotoUserDir', os.homedir());
+
+		// このディレクトリをワークスペースとして開くコマンド
+		quickPickItems.push({ id: COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE, label: COMMAND_LABEL_PREFIX + i18nText('openDirectoryAsWorkspace'), fullPath: directory });
 	}
 	catch (err)
 	{
@@ -841,6 +845,15 @@ async function onItemSelected(quickPick: vscode.QuickPick<MyQuickPickItem>, item
 	{
 		// 隠しファイルの表示設定を切り替える
 		toggleShowHiddenFile(quickPick, directory);
+	}
+	else if (item.id === COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE)
+	{
+		// Codeでディレクトリを開く
+		if (item.fullPath)
+		{
+			// trueにすることで新しいウィンドウで開く
+			vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(item.fullPath), true);
+		}
 	}
 	else
 	{
