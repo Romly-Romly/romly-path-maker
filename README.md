@@ -18,9 +18,14 @@
 	- 選択したファイルをエディタで開く。
 	- 選択したファイルのパスを、
 		- クリップボードにコピーする。
+		- アクティブなエディタに挿入する。
 		- アクティブなターミナルに挿入する。
 		- （基準ディレクトリを設定しておき、相対パスを得ることも可能）
 	- ディレクトリをエクスプローラー／ファインダーで開く
+
+#### パス直接入力モード
+
+コマンドパレットに`cd `を入力すると、パスの直接入力モードとなり、『設定されている基準ディレクトリ＋`cd `の後に入力したパス』で解決したディレクトリにあるファイル一覧を表示するようになります。求めているファイルやディレクトリがどこにあるかわかっているときに素早く指定できて便利です。
 
 ### 使い方
 
@@ -30,7 +35,7 @@
 
 * `romly-path-maker.baseDirectory`: **設定する必要はありません。内部で使用されます。** 設定した基準ディレクトリが保存されます。この値が設定されていると、取得できるパスがこれを元にした相対パスになります。拡張機能呼び出し時に設定できるので、設定を直接変更する必要はありません。*ワークスペースのスコープ優先で読み書きされます。*
 
-* `romly-path-maker.defaultAction`: ファイルを選択したときの処理を設定します。エディタで開く、パスをコピー、パスをターミナルに挿入、パスのディレクトリをエクスプローラー（ファインダー）で開くのいずれかを設定できます。
+* `romly-path-maker.defaultAction`: ファイルを選択したときの処理を設定します。エディタで開く、パスをコピー、パスをエディタに挿入、ターミナルに挿入、パスのディレクトリをエクスプローラー（ファインダー）で開くのいずれかを設定できます。
 
 * `romly-path-maker.groupDirectories`: `true`の場合、ディレクトリとファイルを分け、ディレクトリをリストの先頭にまとめて表示します。
 
@@ -86,6 +91,7 @@ I assume it's common that you have to input file paths as command arguments in t
 	- Open the selected file in the editor.
 	- About the path of the selected file able to,
 		- Copy to the clipboard.
+		- Insert into the active editor.
 		- Insert into the active terminal.
 		- (You can also get relative path by setting a base directory)
 	- Open the directory in File Explorer/Finder.
@@ -98,7 +104,7 @@ After installing the extension, execute it by entering something like `Romly Pat
 
 * `romly-path-maker.baseDirectory`: **No need to set this. It is used internally.** The configured base directory is stored here. If this value is set, the obtained paths will be relative to this base directory. There is no need to change the setting directly because you can set this from the extension via the command palette. *It is read and written with workspace scope priority.*
 
-* `romly-path-maker.defaultAction`: Sets the action to be performed when the file is selected. Options include opening the file in the editor, copying the path, inserting the path into the terminal, or opening the file's directory in the File Explorer (or Finder).
+* `romly-path-maker.defaultAction`: Sets the action to be performed when the file is selected. Options include opening the file in the editor, copying the path, inserting the path into the editor/terminal, or opening the file's directory in the File Explorer (or Finder).
 
 * `romly-path-maker.groupDirectories`: If set to `true`, directories and files are shown separately, with directories displayed at the top of the list.
 

@@ -12,6 +12,7 @@
 	"defaultAction": "The action when the file is selected.",
 	"defaultAction.open": "Open the file in editor.",
 	"defaultAction.copy": "Copy file path to clipboard.",
+	"defaultAction.editor": "Insert file path to active editor.",
 	"defaultAction.terminal": "Insert file path to active terminal.",
 	"defaultAction.reveal": "Reveal file in the File Explorer or Finder.",
 	"hideUserName": "Mask the directory name of the user name in the pathes."

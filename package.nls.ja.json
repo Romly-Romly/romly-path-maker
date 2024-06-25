@@ -12,6 +12,7 @@
 	"defaultAction": "ファイルを選択した時の処理。",
 	"defaultAction.open": "ファイルをエディターで開く。",
 	"defaultAction.copy": "パスをクリップボードにコピーする。",
+	"defaultAction.editor": "パスをアクティブなターミナルに挿入する。",
 	"defaultAction.terminal": "パスをアクティブなターミナルに挿入する。",
 	"defaultAction.reveal": "ファイルのあるディレクトリをエクスプローラーまたはファインダーで表示する。",
 	"hideUserName": "パスの中にあるユーザー名のディレクトリを隠す。"
