@@ -943,11 +943,13 @@ function createCDModeQuickPickItems(quickPick: vscode.QuickPick<vscode.QuickPick
 function toggleShowHiddenFile(quickPick: vscode.QuickPick<vscode.QuickPickItem>, directory: string)
 {
 	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	config.update(CONFIG_KEY_SHOW_HIDDEN_FILES, !config.get(CONFIG_KEY_SHOW_HIDDEN_FILES), vscode.ConfigurationTarget.Global);
-
-	// 設定の変更に伴うQuickPick自体の更新
-	quickPick.items = isInCDMode(quickPick) ? createCDModeQuickPickItems(quickPick) : createQuickPickItems(directory);
-	quickPick.buttons = createQuickPickButtons(quickPick);
+	const currentValue = config.get<boolean>(CONFIG_KEY_SHOW_HIDDEN_FILES);
+	config.update(CONFIG_KEY_SHOW_HIDDEN_FILES, !currentValue, vscode.ConfigurationTarget.Global).then(() =>
+	{
+		// 設定の変更に伴うQuickPick自体の更新
+		quickPick.items = isInCDMode(quickPick) ? createCDModeQuickPickItems(quickPick) : createQuickPickItems(directory);
+		quickPick.buttons = createQuickPickButtons(quickPick);
+	});
 }
 
 
@@ -962,11 +964,12 @@ function toggleShowHiddenFile(quickPick: vscode.QuickPick<vscode.QuickPickItem>,
 function toggleGroupDirectories(quickPick: vscode.QuickPick<vscode.QuickPickItem>, directory: string)
 {
 	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	config.update(CONFIG_KEY_GROUP_DIRECTORIES, !config.get(CONFIG_KEY_GROUP_DIRECTORIES), vscode.ConfigurationTarget.Global);
-
-	// 設定の変更に伴うQuickPick自体の更新
-	quickPick.items = createQuickPickItems(directory);
-	quickPick.buttons = createQuickPickButtons(quickPick);
+	config.update(CONFIG_KEY_GROUP_DIRECTORIES, !config.get(CONFIG_KEY_GROUP_DIRECTORIES), vscode.ConfigurationTarget.Global).then(() =>
+	{
+		// 設定の変更に伴うQuickPick自体の更新
+		quickPick.items = createQuickPickItems(directory);
+		quickPick.buttons = createQuickPickButtons(quickPick);
+	});
 }
 
 
