@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as os from 'os';
+import * as path from 'path';
 
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
@@ -30,6 +31,59 @@ const CONFIG_KEY_START_DIRECTORY = 'startDirectory';
 
 
 /**
+ * 指定されたパスを絶対パスに変換する。
+ * 既に絶対パスの場合はそのまま、相対パスの場合はOSに応じたルートディレクトリを先頭に付加して絶対パスに変換する。
+ *
+ * @param inputPath 変換したいパス文字列
+ * @returns 絶対パスに変換された文字列
+ *
+ * @example
+ * // Windows環境の場合
+ * ensureAbsolutePath('folder/file.txt') // 返り値: 'C:\folder\file.txt'
+ * ensureAbsolutePath('C:\folder\file.txt') // 返り値: 'C:\folder\file.txt'
+ *
+ * // Unix系環境の場合
+ * ensureAbsolutePath('folder/file.txt') // 返り値: '/folder/file.txt'
+ * ensureAbsolutePath('/folder/file.txt') // 返り値: '/folder/file.txt'
+ *
+ * @throws {Error} inputPathが文字列でない場合
+ */
+function ensureAbsolutePath(inputPath: string): string
+{
+	/**
+	 * Windows環境でルートディレクトリ `C:\` を取得する。
+	 * Windows以外では正しく取得できない。ネットワークドライブなんかも無理。
+	 * @returns
+	 */
+	function getWindowsRootDirectory(): string
+	{
+		return process.cwd().split(path.sep)[0] + path.sep;
+	}
+
+	// 絶対パスならそのまま返す。
+	if (path.isAbsolute(inputPath))
+	{
+		return inputPath;
+	}
+
+	// OSごとにルートディレクトリを決定
+	// '/' は path.sep と等価だけど、ルートディレクトリであるということを示すために敢えて '/' と書いた。
+	const rootDir = process.platform === 'win32' ? getWindowsRootDirectory() : '/';
+
+	// ルートディレクトリから始まる絶対パスを作成
+	return path.join(rootDir, inputPath);
+};
+
+
+
+
+
+
+
+
+
+
+/**
  * 表示する最初のディレクトリを取得する。
  * 優先順にワークスペースのディレクトリ → エディタのディレクトリ → ユーザーディレクトリ。
  */
@@ -43,14 +97,17 @@ function getStartDirectory(): string
 
 	if (startDirectory === 'Last')
 	{
+		// 最後に表示したディレクトリを取得。取得した値は必ず絶対パスだと想定する。
+		const lastDirectory = ensureAbsolutePath(config.get<string>(myinterfaces.CONFIG_KEY_LAST_DIRECTORY) ?? '');
+
 		// ディレクトリが存在するか確認
-		const lastDirectory = <string>config.get(myinterfaces.CONFIG_KEY_LAST_DIRECTORY);
 		if (fs.existsSync(lastDirectory))
 		{
 			return lastDirectory;
 		}
 		else
 		{
+			console.log(`Romly Path Maker: Last directory not found: ${lastDirectory}`);
 			return myinterfaces.getWorkspaceDirectory() || ryutils.getActiveEditorDirectory() || fallbackDir;
 		}
 	}
