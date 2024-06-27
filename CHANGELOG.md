@@ -4,6 +4,16 @@
 
 [English is here](#english英語)
 
+### [1.2.1] - 2024-06-27
+
+#### 修正
+- ディレクトリ／ファイル分割表示設定、隠しファイル表示設定が切り替わらない事があるバグを修正。
+- 拡張機能のアイコンの背景が透過されていなかった問題を修正。
+- 前回表示したディレクトリに相対パスが書き込まれていた場合に意図しないディレクトリが表示されてしまっていた不具合を修正。
+- 存在しないディレクトリに移動しようとした時にエラーになっていた不具合を修正。
+- 編集中のファイルが未保存の時に「編集中のファイルのディレクトリに移動する」コマンドが表示されないよう修正。
+- `hideUserName`設定がtrueの時に一部にユーザー名が含まれるファイル名も隠してしまっていた不具合を修正。
+
 ### [1.2.0] - 2024-06-25
 
 #### 追加
@@ -42,6 +52,17 @@
 ## English(英語)
 
 [日本語(Japanese)はこちら](#日本語japanese)
+
+### [1.2.1] - 2024-06-27
+
+#### Fixed
+- Fixed a bug the directory/file split display setting and the hidden file display setting sometimes wouldn't toggle properly.
+- Fixed an issue the background of extension icons wasn't transparent.
+- Fixed a bug unintended directory was displayed if a relative path was written to the last viewed directory.
+- Fixed an issue where an error occurred when trying to go to a directory that doesn't exist.
+- Modified the "Go to editing file directory" command to not appear when the active editor file is unsaved.
+- Fixed a bug where filenames partially containing the username were also hidden when the `hideUserName` setting is true.
+
 
 ### [1.2.0] - 2024-06-25
 

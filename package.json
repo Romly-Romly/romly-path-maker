@@ -13,6 +13,10 @@
 	"activationEvents": [],
 	"main": "./dist/extension.js",
 	"icon": "images/icon.png",
+	"galleryBanner": {
+		"color": "#00a0d9",
+		"theme": "dark"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/Romly-Romly/romly-path-maker"
