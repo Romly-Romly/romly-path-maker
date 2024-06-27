@@ -325,6 +325,47 @@ class MyQuickPickDirectoryItem extends MyQuickPickFileSystemEntityItem
 
 
 /**
+ * 指定されたディレクトリ内のファイルをリストアップし、必要に応じてエラーメッセージを表示する。
+ *
+ * @param directory ファイルをリストアップするディレクトリのパス
+ * @returns listFilesInDirectory の結果をそのまま返す。
+ */
+function listFilesAndHandleError(directory: string): ListFilesResult
+{
+	const listFiles = listFilesInDirectory(directory);
+	if (listFiles.result === FileListStatus.SUCCESS)
+	{
+		return listFiles;
+	}
+	else if (listFiles.result === FileListStatus.NOT_FOUND)
+	{
+		vscode.window.showErrorMessage(i18n(i18nTexts, 'error.directoryNotFound', { dir: directory }));
+	}
+	else
+	{
+		const e = listFiles.error;
+		if (e !== undefined)
+		{
+			vscode.window.showErrorMessage(i18n(i18nTexts, 'error.listFilesFailed', { dir: directory }), i18n(i18nTexts, 'error.listFilesFailed.showDetail')).then(() =>
+			{
+				// エラー詳細を Output Channel に表示
+				const channel = vscode.window.createOutputChannel('Romly: Path-Maker');
+				channel.appendLine(`Error occurred while listing files in directory: ${directory}`);
+				channel.appendLine(`Error Message: ${e.message}`);
+				channel.appendLine(`Stack Trace: ${e.stack}`);
+				channel.show();
+			});
+		}
+		else
+		{
+			vscode.window.showErrorMessage(i18n(i18nTexts, 'error.listFilesFailed', { dir: directory }));
+		}
+	}
+
+	return listFiles;
+}
+
+/**
  * CDモードで表示する、ファイルを表す QuickPickItem
  */
 class MyQuickPickCDModeEntityItem extends MyQuickPickFileSystemEntityItem
@@ -372,10 +413,16 @@ class MyQuickPickCDModeEntityItem extends MyQuickPickFileSystemEntityItem
 		if (this.isDirectory)
 		{
 			const directory = this.fullPath;
-			quickPick.title = maskUserNameDirectory(directory);
-			quickPick.value = '';
-			quickPick.items = createQuickPickItems(directory);
-			quickPick.buttons = createQuickPickButtons(quickPick);
+
+			// ディレクトリ内のファイルを検索する
+			const files = listFilesAndHandleError(directory);
+			if (files)
+			{
+				quickPick.title = maskUserNameDirectory(directory);
+				quickPick.value = '';
+				quickPick.items = createQuickPickItems(files);
+				quickPick.buttons = createQuickPickButtons(quickPick);
+			}
 		}
 		else
 		{
@@ -427,12 +474,17 @@ class MyQuickPickCommandItem extends MyQuickPickAcceptableItem
 			// ベースディレクトリとして設定
 			const newBaseDirectory = this.id === COMMAND_ID_SET_BASE_DIRECTORY ? this.fullPath : '';
 			updateSetting(CONFIG_KEY_BASE_DIRECTORY, newBaseDirectory)
-			.then(() => {
-				// 基準ディレクトリの変更に伴ってアイテムを更新
-				quickPick.items = createQuickPickItems(this.fullPath);
-				quickPick.placeholder = getPlaceholderText();
+			.then(() =>
+			{
+				const files = listFilesAndHandleError(this.fullPath);
+				if (files)
+				{
+					// 基準ディレクトリの変更に伴ってアイテムを更新
+					quickPick.items = createQuickPickItems(files);
+					quickPick.placeholder = getPlaceholderText();
 
-				vscode.window.showInformationMessage(i18n(i18nTexts, 'baseDirectoryUpdated', { dir: maskUserNameDirectory(newBaseDirectory) }));
+					vscode.window.showInformationMessage(i18n(i18nTexts, 'baseDirectoryUpdated', { dir: maskUserNameDirectory(newBaseDirectory) }));
+				}
 			})
 			.catch((error) => vscode.window.showErrorMessage(i18n(i18nTexts, 'error.couldntSetBaseDirectory') + `: ${error}`));
 		}
@@ -667,28 +719,74 @@ function getPlaceholderText(): string
 
 
 
-function listFilesInDirectory(directory: string, filterHiddenFiles: boolean): MyFileInfo[]
-{
-	const result = [] as MyFileInfo[];
-	const files = fs.readdirSync(directory);
-	files.forEach((filename) =>
-	{
-		// ファイル情報が取得できなかったもの（エラー発生）は省く
-		try
-		{
-			const fullPath = path.join(directory, filename);
-			const stat = fs.statSync(fullPath);
+enum FileListStatus { SUCCESS, NOT_FOUND, ERROR };
 
-			if (!filterHiddenFiles || !filename.startsWith('.'))
+/**
+ * listFilesInDirectory の結果を表すオブジェクト。
+ */
+class ListFilesResult
+{
+	result: FileListStatus;
+	path: string;
+	files: MyFileInfo[];
+	error?: Error;
+
+	constructor(result: FileListStatus, path: string, files: MyFileInfo[] = [], error: Error | undefined = undefined)
+	{
+		this.result = result;
+		this.path = path;
+		this.files = files;
+		this.error = error;
+	}
+}
+
+/**
+ * 指定されたディレクトリ内のファイル一覧を MyFileInfo のリストとして取得する。
+ *
+ * @param directory ファイル一覧を取得したいディレクトリのパス
+ * @returns ファイル取得の成否、ファイル情報の配列、エラー情報（ある場合）を含むオブジェクト。
+ */
+function listFilesInDirectory(directory: string): ListFilesResult
+{
+	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+	const filterHiddenFiles = !config.get<boolean>(CONFIG_KEY_SHOW_HIDDEN_FILES);
+
+	// ディレクトリの存在チェック
+	if (!fs.existsSync(directory))
+	{
+		return new ListFilesResult(FileListStatus.NOT_FOUND, directory);
+	}
+
+	const result = [] as MyFileInfo[];
+	let files;
+	try
+	{
+		files = fs.readdirSync(directory);
+		for (const filename of files)	// 文中で return する必要があるので forEach ではなく for ループで。
+		{
+			// ファイル情報が取得できなかったもの（エラー発生）は省く
+			try
 			{
-				result.push(new MyFileInfo(fullPath, stat.isDirectory()));
+				const fullPath = path.join(directory, filename);
+				const stat = fs.statSync(fullPath);
+
+				if (!filterHiddenFiles || !filename.startsWith('.'))
+				{
+					result.push(new MyFileInfo(fullPath, stat.isDirectory()));
+				}
+			}
+			catch (err)
+			{
+				console.error(`Romly Path Maker: readdirSync failed for: ${filename}`, err);
 			}
 		}
-		catch (err)
-		{
-		}
-	});
-	return result;
+	}
+	catch (err)
+	{
+		return new ListFilesResult(FileListStatus.ERROR, directory, [], err as Error);
+	}
+
+	return new ListFilesResult(FileListStatus.SUCCESS, directory, result);
 }
 
 
@@ -787,22 +885,17 @@ async function updateSetting(key: string, value: any): Promise<void>
  * @param directory
  * @returns
  */
-function createQuickPickItems(directory: string): vscode.QuickPickItem[]
+function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPickItem[]
 {
-	const quickPickItems: vscode.QuickPickItem[] = [];
+	// ディレクトリとファイルを分ける？
 	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+	const groupDirectories = config.get<boolean>(CONFIG_KEY_GROUP_DIRECTORIES);
 
+	const directory = listFilesResult.path;
+	const files = listFilesResult.files;
 	const baseDir = getBaseDirectoryFromConfig();
 
-	// ディレクトリとファイルを分ける？
-	const groupDirectories = config.get(CONFIG_KEY_GROUP_DIRECTORIES) as boolean;
-
-	// 隠しファイルを表示する？
-	const showHiddenFiles = config.get(CONFIG_KEY_SHOW_HIDDEN_FILES) as boolean;
-
-	// ディレクトリ内のファイルを検索する
-	const files = listFilesInDirectory(directory, !showHiddenFiles);
-
+	const quickPickItems: vscode.QuickPickItem[] = [];
 	if (groupDirectories)
 	{
 		// まずディレクトリ
@@ -861,6 +954,7 @@ function createQuickPickItems(directory: string): vscode.QuickPickItem[]
 	quickPickItems.push(new MyQuickPickInputPathItem());
 
 	// 隠しファイルの表示を切り替えるコマンド
+	const showHiddenFiles = config.get<string>(CONFIG_KEY_SHOW_HIDDEN_FILES);
 	quickPickItems.push(new MyQuickPickCommandItem(i18n(i18nTexts, showHiddenFiles ? 'hideHiddenFiles' : 'showHiddenFiles'), '', '', COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES, directory));
 
 	// ワークスペース、編集中のファイル、ユーザーのディレクトリへそれぞれ移動するコマンド
@@ -913,19 +1007,17 @@ function createCDModeQuickPickItems(quickPick: vscode.QuickPick<vscode.QuickPick
 	const inputPath = quickPick.value;
 	const absolutePath = path.resolve(getBaseDirectoryFromConfig(), inputPath);
 
-	// ディレクトリが存在するかチェックし、存在する場合はその中のファイルをリストアップして表示するg
-	if (fs.existsSync(absolutePath))
+	const files = listFilesInDirectory(absolutePath);
+	if (files.result === FileListStatus.SUCCESS)
 	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const filterHiddenFiles = !config.get<boolean>(CONFIG_KEY_SHOW_HIDDEN_FILES);
-		const files = listFilesInDirectory(absolutePath, filterHiddenFiles);
-		return files.map(fileInfo => new MyQuickPickCDModeEntityItem(fileInfo));
+		return files.files.map(fileInfo => new MyQuickPickCDModeEntityItem(fileInfo));
 	}
-	else
+	else if (files.result === FileListStatus.NOT_FOUND)
 	{
-		console.log(`No such directory: ${absolutePath}`);
-		return [];
+		console.log(`Romly Path Maker: No such directory: ${absolutePath}`);
 	}
+
+	return [];
 }
 
 
@@ -947,8 +1039,20 @@ function toggleShowHiddenFile(quickPick: vscode.QuickPick<vscode.QuickPickItem>,
 	config.update(CONFIG_KEY_SHOW_HIDDEN_FILES, !currentValue, vscode.ConfigurationTarget.Global).then(() =>
 	{
 		// 設定の変更に伴うQuickPick自体の更新
-		quickPick.items = isInCDMode(quickPick) ? createCDModeQuickPickItems(quickPick) : createQuickPickItems(directory);
-		quickPick.buttons = createQuickPickButtons(quickPick);
+		if (isInCDMode(quickPick))
+		{
+			quickPick.items = createCDModeQuickPickItems(quickPick);
+			quickPick.buttons = createQuickPickButtons(quickPick);
+		}
+		else
+		{
+			const files = listFilesAndHandleError(directory);
+			if (files)
+			{
+				quickPick.items = createQuickPickItems(files);
+				quickPick.buttons = createQuickPickButtons(quickPick);
+			}
+		}
 	});
 }
 
@@ -967,8 +1071,12 @@ function toggleGroupDirectories(quickPick: vscode.QuickPick<vscode.QuickPickItem
 	config.update(CONFIG_KEY_GROUP_DIRECTORIES, !config.get(CONFIG_KEY_GROUP_DIRECTORIES), vscode.ConfigurationTarget.Global).then(() =>
 	{
 		// 設定の変更に伴うQuickPick自体の更新
-		quickPick.items = createQuickPickItems(directory);
-		quickPick.buttons = createQuickPickButtons(quickPick);
+		const files = listFilesAndHandleError(directory);
+		if (files)
+		{
+			quickPick.items = createQuickPickItems(files);
+			quickPick.buttons = createQuickPickButtons(quickPick);
+		}
 	});
 }
 
@@ -1031,13 +1139,12 @@ function handleQuickPickDidChangeValue(quickPick: vscode.QuickPick<vscode.QuickP
 
 /**
  * 指定されたディレクトリ内のファイル一覧を QuickPick で表示する。
- * @param directory
- * @returns
+ * @param directory 表示するディレクトリのフルパス。
  */
-export async function showFilesInQuickPick(directory: string)
+export function showFilesInQuickPick(directory: string): void
 {
-	const quickPickItems = createQuickPickItems(directory);
-	if (quickPickItems.length === 0)
+	const files = listFilesAndHandleError(directory);
+	if (files.result !== FileListStatus.SUCCESS)
 	{
 		return;
 	}
@@ -1046,7 +1153,7 @@ export async function showFilesInQuickPick(directory: string)
 	updateSetting(CONFIG_KEY_LAST_DIRECTORY, directory).catch((error) => console.error(error));
 
 	const quickPick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-	quickPick.items = quickPickItems;
+	quickPick.items = createQuickPickItems(files);
 	quickPick.title = maskUserNameDirectory(directory);
 	quickPick.buttons = createQuickPickButtons(quickPick);
 	quickPick.placeholder = getPlaceholderText();

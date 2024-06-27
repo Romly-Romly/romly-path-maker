@@ -136,7 +136,22 @@ const messages: LocalizedMessages =
 	{
 		ja: 'パスを入力して移動',
 		en: 'Go to input path',
-	}
+	},
+	'error.directoryNotFound':
+	{
+		ja: 'ディレクトリ {dir} は存在しません。',
+		en: 'Directory "{dir}" not found.',
+	},
+	'error.listFilesFailed':
+	{
+		ja: '{dir} 内のファイル取得に失敗しました。',
+		en: 'Failed to get files in "{dir}".',
+	},
+	'error.listFilesFailed.showDetail':
+	{
+		ja: '詳細を表示',
+		en: 'Show Detail',
+	},
 };
 
 export default messages;
