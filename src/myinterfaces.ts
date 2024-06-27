@@ -621,15 +621,15 @@ function maskUserNameDirectory(pathString: string): string
 	}
 
 	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	const hideUserName = config.get(CONFIG_KEY_HIDE_USERNAME) as boolean;
+	const hideUserName = config.get<boolean>(CONFIG_KEY_HIDE_USERNAME);
 
 	if (hideUserName)
 	{
-		const homeDir = os.homedir();
-		const username = path.basename(homeDir);
+		const username = path.basename(os.homedir());
 		const escapedUsername = escapeRegExp(username);
-		const regex = new RegExp(`\\b${escapedUsername}\\b`, 'g');
-		return pathString.replace(regex, '<username>');
+		const escapedSep = escapeRegExp(path.sep);
+		const regex = new RegExp(`${escapedSep}${escapedUsername}(${escapedSep}|$)`, 'g');
+		return pathString.replace(regex, `${path.sep}<username>$1`);
 	}
 	else
 	{
