@@ -959,7 +959,11 @@ function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPic
 
 	// ワークスペース、編集中のファイル、ユーザーのディレクトリへそれぞれ移動するコマンド
 	addGotoDirectoryItem(quickPickItems, directory, 'gotoWorkspaceDir', getWorkspaceDirectory());
-	addGotoDirectoryItem(quickPickItems, directory, 'gotoEditingFileDir', ryutils.getActiveEditorDirectory());
+	const activeEditorDirectory = ryutils.getActiveEditorDirectory();
+	if (activeEditorDirectory)
+	{
+		addGotoDirectoryItem(quickPickItems, directory, 'gotoEditingFileDir', activeEditorDirectory);
+	}
 	addGotoDirectoryItem(quickPickItems, directory, 'gotoUserDir', os.homedir());
 	addGotoDirectoryItem(quickPickItems, directory, 'backtoBaseDir', getBaseDirectoryFromConfig());
 

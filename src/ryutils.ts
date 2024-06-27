@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { rmSync } from 'fs';
+import * as fs from 'fs';
 import { exec } from 'child_process';
 
 
@@ -107,21 +107,31 @@ export function openDirectory(path: string): void
 
 /**
  * アクティブなエディターで編集しているファイルのパスを取得する。
- * アクティブなエディターが存在しない場合は空文字列を返す。
- * @returns ディレクトリパス。アクティブなエディターがない場合は空文字列。
+ * アクティブなエディターが存在しない場合やファイルが見付からない場合は undefined を返す。
+ * @returns ディレクトリパス。アクティブなエディターがない場合やファイルが見付からない場合は undefined 。
  */
-export function getActiveEditorDirectory(): string
+export function getActiveEditorDirectory(): string | undefined
 {
 	const editor = vscode.window.activeTextEditor;
 	if (editor)
 	{
 		const filePath = editor.document.uri.fsPath;
-		return path.dirname(filePath);
+
+		// ファイルが実際に存在するか確認
+		if (fs.existsSync(filePath))
+		{
+			return path.dirname(filePath);
+		}
+		else
+		{
+			// ファイルが見つからない場合
+			return undefined;
+		}
 	}
 	else
 	{
 		// アクティブエディターが見つからなかった
-		return '';
+		return undefined;
 	}
 }
 
