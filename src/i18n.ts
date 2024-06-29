@@ -1,5 +1,5 @@
 // 文字列リソースはja, enロケール必須とする
-interface RequiredLocales
+interface I18NText
 {
 	ja: string;
 	en: string;
@@ -7,24 +7,50 @@ interface RequiredLocales
 }
 
 // プロジェクトごとの文字列リソースはこの型を使って定義のこと
-export type LocalizedMessages = Record<string, RequiredLocales>;
+export type LocalizedMessages = Record<string, I18NText>;
 
-// 文字列リソースの特定のキーが見つからない場合のエラーメッセージ
-const KEY_NOT_FOUND: RequiredLocales =
-{
-	ja: '文字列リソースのキー "{key}" が見付かりませんでした。',
-	en: 'Text resource key "{key}" not found.',
-	fr: 'Clé de ressource textuelle "{key}" non trouvée.',
-	'zh-cn': '未找到文本资源键 "{key}"。',
-};
 
-// 特定の文字列に対応するロケールが見つからない場合のエラーメッセージ
-const EN_LOCALE_NOT_FOUND: RequiredLocales =
+export const COMMON_TEXTS: LocalizedMessages =
 {
-	ja: '文字列リソースのキー "{key}" にロケール en のテキストが見付かりませんでした。',
-	en: 'Text resource key "{key}" with locale en not found.',
-	fr: 'Clé de ressource textuelle "{key}" avec la locale en non trouvée.',
-	'zh-cn': '未找到带有英语区域设置的文本资源键 "{key}"。',
+	yes:
+	{
+		en: 'Yes',
+		ja: 'はい',
+		fr: 'Oui',
+		'zh-cn': '是'
+	},
+	search:
+	{
+		en: 'Search',
+		ja: '検索',
+		fr: 'Rechercher',
+		'zh-cn': '搜索'
+	},
+	showErrorDetailButtonCaption:
+	{
+		ja: '詳細を表示',
+		en: 'Show Detail',
+		fr: 'Afficher les détails',
+		'zh-cn': '显示详细信息'
+	},
+
+	// 文字列リソースの特定のキーが見つからない場合のエラーメッセージ
+	stringResourceKeyNotFound:
+	{
+		ja: '文字列リソースのキー "{key}" が見付かりませんでした。',
+		en: 'Text resource key "{key}" not found.',
+		fr: 'Clé de ressource textuelle "{key}" non trouvée.',
+		'zh-cn': '未找到文本资源键 "{key}"。',
+	},
+
+	// 特定の文字列に対応するロケールが見つからない場合のエラーメッセージ
+	stringResourceLocaleNotFound:
+	{
+		ja: '文字列リソースのキー "{key}" にロケール en のテキストが見付かりませんでした。',
+		en: 'Text resource key "{key}" with locale en not found.',
+		fr: 'Clé de ressource textuelle "{key}" avec la locale en non trouvée.',
+		'zh-cn': '未找到带有英语区域设置的文本资源键 "{key}"。',
+	},
 };
 
 
@@ -73,7 +99,7 @@ function replacePlaceholders(s: string, values: Record<string, string>): string
  * @param localeKey 取得したいメッセージのロケールキー。
  * @returns ローカライズされたメッセージ。
  */
-function getLocalizedMessage(message: Record<string, string>, localeKey: string, defaultValue: string): string
+function getLocalizedMessage(message: I18NText, localeKey: string, defaultValue: string): string
 {
 	return message[localeKey] || message['en'] || defaultValue;
 }
@@ -102,7 +128,8 @@ function i18n(messages: LocalizedMessages, key: string, values: Record<string, s
 	if (!text)
 	{
 		// 文字列リソースに対応するキーが見つからない
-		throw new Error(replacePlaceholders(getLocalizedMessage(KEY_NOT_FOUND, localeKey, KEY_NOT_FOUND['en']), { key: key }));
+		const s = COMMON_TEXTS.stringResourceKeyNotFound;
+		throw new Error(replacePlaceholders(getLocalizedMessage(s, localeKey, s['en']), { key: key }));
 	}
 	else
 	{
@@ -111,7 +138,8 @@ function i18n(messages: LocalizedMessages, key: string, values: Record<string, s
 		// enキーすら見つからない場合は必ずエラー
 		if (localizedText === '')
 		{
-			throw new Error(replacePlaceholders(getLocalizedMessage(EN_LOCALE_NOT_FOUND, localeKey, EN_LOCALE_NOT_FOUND['en']), { key: key }));
+			const s = COMMON_TEXTS.stringResourceLocaleNotFound;
+			throw new Error(replacePlaceholders(getLocalizedMessage(s, localeKey, s['en']), { key: key }));
 		}
 		else
 		{

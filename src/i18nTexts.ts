@@ -122,10 +122,15 @@ const messages: LocalizedMessages =
 		ja: '基準ディレクトリを設定できませんでした',
 		en: "Couldn't set base directory",
 	},
-	'openDirectoryAsWorkspace':
+	openDirectoryAsWorkspace:
 	{
 		ja: 'このディレクトリをCodeで開く',
 		en: 'Open this directory in Code',
+	},
+	openDirectoryAsWorkspaceInNewWindow:
+	{
+		ja: 'このディレクトリを新しいウインドウで開く',
+		en: 'Open this directory in new window',
 	},
 	'error.couldntOpenWorkspace':
 	{
@@ -146,11 +151,6 @@ const messages: LocalizedMessages =
 	{
 		ja: '{dir} 内のファイル取得に失敗しました。',
 		en: 'Failed to get files in "{dir}".',
-	},
-	'error.listFilesFailed.showDetail':
-	{
-		ja: '詳細を表示',
-		en: 'Show Detail',
 	},
 };
 

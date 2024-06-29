@@ -38,7 +38,6 @@ const BUTTON_ID_TOGGLE_GROUP_DIRECTORIES = 'toggle_group_directories';
 const COMMAND_ID_SET_BASE_DIRECTORY = 'set_base_directory';
 const COMMAND_ID_CLEAR_BASE_DIRECTORY = 'clear_base_directory';
 const COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
-const COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE = 'open_directory_as_workspace';
 const COMMAND_ID_GOTO_DIRECTORY = 'goto_directory';
 
 // コマンドのラベルに付く前置詞
@@ -88,15 +87,30 @@ abstract class MyQuickPickAcceptableItem implements vscode.QuickPickItem
 {
 	label: string;
 	description: string;
+	buttons: ryutils.RyQuickPickButton[];
 
 	constructor()
 	{
 		this.label = '';
 		this.description = '';
+		this.buttons = [];
 	}
 
 	abstract didAccept(quickPick: vscode.QuickPick<vscode.QuickPickItem>): void;
+
+	onButtonClick(button: ryutils.RyQuickPickButton): void
+	{
+	}
 }
+
+
+
+
+
+
+
+
+
 
 abstract class MyQuickPickFileSystemEntityItem extends MyQuickPickAcceptableItem
 {
@@ -109,7 +123,6 @@ abstract class MyQuickPickFileSystemEntityItem extends MyQuickPickAcceptableItem
 
 	fullPath: string;
 	insertPath: string;
-	buttons: ryutils.RyQuickPickButton[];
 
 	iconPath?: vscode.Uri | {
 		light: vscode.Uri;
@@ -121,7 +134,6 @@ abstract class MyQuickPickFileSystemEntityItem extends MyQuickPickAcceptableItem
 		super();
 		this.fullPath = '';
 		this.insertPath = '';
-		this.buttons = [];
 	}
 
 	protected addCopyButton(): void
@@ -198,7 +210,7 @@ abstract class MyQuickPickFileSystemEntityItem extends MyQuickPickAcceptableItem
 		}
 	}
 
-	onButtonClick(button: ryutils.RyQuickPickButton): void
+	override onButtonClick(button: ryutils.RyQuickPickButton): void
 	{
 		if (button.id === this.BUTTON_ID_COPY)
 		{
@@ -343,22 +355,17 @@ function listFilesAndHandleError(directory: string): ListFilesResult
 	}
 	else
 	{
+		const msg = i18n(i18nTexts, 'error.listFilesFailed', { dir: directory });
 		const e = listFiles.error;
 		if (e !== undefined)
 		{
-			vscode.window.showErrorMessage(i18n(i18nTexts, 'error.listFilesFailed', { dir: directory }), i18n(i18nTexts, 'error.listFilesFailed.showDetail')).then(() =>
-			{
-				// エラー詳細を Output Channel に表示
-				const channel = vscode.window.createOutputChannel('Romly: Path-Maker');
-				channel.appendLine(`Error occurred while listing files in directory: ${directory}`);
-				channel.appendLine(`Error Message: ${e.message}`);
-				channel.appendLine(`Stack Trace: ${e.stack}`);
-				channel.show();
-			});
+			// エラー詳細を Output Channel に表示
+			const debugErrorMessage = `Error occurred while listing files in directory: ${directory}`;
+			ryutils.showErrorMessageWithDetailChannel(msg, 'Romly: Path-Maker', debugErrorMessage, e);
 		}
 		else
 		{
-			vscode.window.showErrorMessage(i18n(i18nTexts, 'error.listFilesFailed', { dir: directory }));
+			vscode.window.showErrorMessage(msg);
 		}
 	}
 
@@ -493,15 +500,6 @@ class MyQuickPickCommandItem extends MyQuickPickAcceptableItem
 			// 隠しファイルの表示設定を切り替える
 			toggleShowHiddenFile(quickPick, this.fullPath);
 		}
-		else if (this.id === COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE)
-		{
-			// Codeでディレクトリを開く
-			if (this.fullPath)
-			{
-				// trueにすることで新しいウィンドウで開く
-				vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(this.fullPath), true);
-			}
-		}
 		else if (this.id === COMMAND_ID_GOTO_DIRECTORY)
 		{
 			// そのディレクトリへ移動
@@ -510,6 +508,47 @@ class MyQuickPickCommandItem extends MyQuickPickAcceptableItem
 	}
 }
 
+
+
+
+
+
+
+
+
+
+/**
+ * 「ワークスペースとして開く」コマンドの QuickPickItem。
+ */
+class MyQuickPickOpenAsWorkspaceCommandItem extends MyQuickPickAcceptableItem
+{
+	private readonly _directory: string;
+
+	constructor(aDirectory: string)
+	{
+		super();
+		this.label = COMMAND_LABEL_PREFIX + i18n(i18nTexts, 'openDirectoryAsWorkspace');
+		this.description = '';
+		this._directory = aDirectory;
+
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('empty-window'), tooltip: i18n(i18nTexts, 'openDirectoryAsWorkspaceInNewWindow'), id: '' });
+	}
+
+	override didAccept(quickPick: vscode.QuickPick<vscode.QuickPickItem>): void
+	{
+		// Codeでディレクトリを開く
+		if (this._directory)
+		{
+			vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(this._directory), false);
+		}
+	}
+
+	override onButtonClick(button: ryutils.RyQuickPickButton): void
+	{
+		// trueにすることで新しいウィンドウで開く
+		vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(this._directory), true);
+	}
+}
 
 
 
@@ -799,18 +838,18 @@ function listFilesInDirectory(directory: string): ListFilesResult
 
 
 /**
- * 指定されたディレクトリへの移動コマンド情報をquickPickItemsに追加する。
+ * 指定されたディレクトリへの移動コマンド情報を quickPickItems に追加する。
  *
- * @param items - 追加先。
- * @param directory - 現在のディレクトリ。
- * @param labelKey - アイテムのラベルの文字列リソースのキー。
- * @param targetDir - 移動先のディレクトリ。
+ * @param items 追加先。
+ * @param directory 現在のディレクトリ。
+ * @param labelKey アイテムのラベルの文字列リソースのキー。
+ * @param targetDir 移動先のディレクトリ。
  */
 function addGotoDirectoryItem(items: vscode.QuickPickItem[], directory: string, labelKey: string, targetDir: string): void
 {
 	if (targetDir !== '' && targetDir !== directory)
 	{
-		items.push(new MyQuickPickCommandItem(i18n(i18nTexts, labelKey), '', maskUserNameDirectory(targetDir), COMMAND_ID_GOTO_DIRECTORY, targetDir));
+		items.push(new MyQuickPickCommandItem(i18n(i18nTexts, labelKey), maskUserNameDirectory(targetDir), '', COMMAND_ID_GOTO_DIRECTORY, targetDir));
 	}
 }
 
@@ -968,7 +1007,7 @@ function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPic
 	addGotoDirectoryItem(quickPickItems, directory, 'backtoBaseDir', getBaseDirectoryFromConfig());
 
 	// このディレクトリをワークスペースとして開くコマンド
-	quickPickItems.push(new MyQuickPickCommandItem(i18n(i18nTexts, 'openDirectoryAsWorkspace'), '', '', COMMAND_ID_OPEN_DIRECTORY_AS_WORKSPACE, directory));
+	quickPickItems.push(new MyQuickPickOpenAsWorkspaceCommandItem(directory));
 
 	return quickPickItems;
 }
@@ -1181,7 +1220,7 @@ export function showFilesInQuickPick(directory: string): void
 	// 個々のアイテムのボタン押下時の処理
 	quickPick.onDidTriggerItemButton(async (e) =>
 	{
-		if (e.item instanceof MyQuickPickFileSystemEntityItem)
+		if (e.item instanceof MyQuickPickAcceptableItem)
 		{
 			const button = e.button as ryutils.RyQuickPickButton;
 			e.item.onButtonClick(button);

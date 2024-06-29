@@ -4,6 +4,12 @@
 
 [English is here](#english英語)
 
+### [1.2.2] - 2024-06-29
+
+#### 変更
+- ディレクトリに移動するコマンドでdetailに表示されていたパスをdescriptionに表示するよう変更。
+- 「このディレクトリをCodeで開く」を現在のウィンドウで開くよう変更し、新しいウィンドウで開くためのボタンを追加。
+
 ### [1.2.1] - 2024-06-27
 
 #### 修正
@@ -52,6 +58,12 @@
 ## English(英語)
 
 [日本語(Japanese)はこちら](#日本語japanese)
+
+### [1.2.2] - 2024-06-29
+
+#### Changed
+- Modified the command for go to directories to display the path in the description instead of the details.
+- Changed "Open this directory in Code" to open in the current window and added a button to open in a new window.
 
 ### [1.2.1] - 2024-06-27
 
