@@ -6,8 +6,8 @@ import * as fs from 'fs';
 import * as ryutils from './ryutils';
 
 // 自前の国際化文字列リソースの読み込み
-import i18n from "./i18n";
-import i18nTexts from "./i18nTexts";
+import { i18n, I18NText } from "./i18n";
+import { MESSAGES } from "./i18nTexts";
 
 
 
@@ -138,27 +138,27 @@ abstract class MyQuickPickFileSystemEntityItem extends MyQuickPickAcceptableItem
 
 	protected addCopyButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('copy'), tooltip: i18n(i18nTexts, 'copyPathToClipboard'), id: this.BUTTON_ID_COPY });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('copy'), tooltip: i18n(MESSAGES.copyPathToClipboard), id: this.BUTTON_ID_COPY });
 	}
 
 	protected addInsertPathToEditorButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('insert'), tooltip: i18n(i18nTexts, 'insertPathToActiveEditor'), id: this.BUTTON_ID_INSERT_PATH_TO_EDITOR });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('insert'), tooltip: i18n(MESSAGES.insertPathToActiveEditor), id: this.BUTTON_ID_INSERT_PATH_TO_EDITOR });
 	}
 
 	protected addInsertPathToTerminalButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('terminal'), tooltip: i18n(i18nTexts, 'insertPathToActiveTerminal'), id: this.BUTTON_ID_INSERT_PATH_TO_TERMINAL });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('terminal'), tooltip: i18n(MESSAGES.insertPathToActiveTerminal), id: this.BUTTON_ID_INSERT_PATH_TO_TERMINAL });
 	}
 
 	protected addOpenInEditorButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('edit'), tooltip: i18n(i18nTexts, 'openInEditor'), id: this.BUTTON_ID_OPEN_IN_EDITOR });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('edit'), tooltip: i18n(MESSAGES.openInEditor), id: this.BUTTON_ID_OPEN_IN_EDITOR });
 	}
 
 	protected addRevealInFileExplorerButton()
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('folder-opened'), tooltip: i18n(i18nTexts, 'revealInFileExplorer'), id: this.BUTTON_ID_REVEAL_IN_FILE_EXPLORER });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('folder-opened'), tooltip: i18n(MESSAGES.revealInFileExplorer), id: this.BUTTON_ID_REVEAL_IN_FILE_EXPLORER });
 	}
 
 	protected setFolderIcon(): void
@@ -351,11 +351,11 @@ function listFilesAndHandleError(directory: string): ListFilesResult
 	}
 	else if (listFiles.result === FileListStatus.NOT_FOUND)
 	{
-		vscode.window.showErrorMessage(i18n(i18nTexts, 'error.directoryNotFound', { dir: directory }));
+		vscode.window.showErrorMessage(i18n(MESSAGES['error.directoryNotFound'], { dir: directory }));
 	}
 	else
 	{
-		const msg = i18n(i18nTexts, 'error.listFilesFailed', { dir: directory });
+		const msg = i18n(MESSAGES['error.listFilesFailed'], { dir: directory });
 		const e = listFiles.error;
 		if (e !== undefined)
 		{
@@ -490,10 +490,10 @@ class MyQuickPickCommandItem extends MyQuickPickAcceptableItem
 					quickPick.items = createQuickPickItems(files);
 					quickPick.placeholder = getPlaceholderText();
 
-					vscode.window.showInformationMessage(i18n(i18nTexts, 'baseDirectoryUpdated', { dir: maskUserNameDirectory(newBaseDirectory) }));
+					vscode.window.showInformationMessage(i18n(MESSAGES.baseDirectoryUpdated, { dir: maskUserNameDirectory(newBaseDirectory) }));
 				}
 			})
-			.catch((error) => vscode.window.showErrorMessage(i18n(i18nTexts, 'error.couldntSetBaseDirectory') + `: ${error}`));
+			.catch((error) => vscode.window.showErrorMessage(i18n(MESSAGES['error.couldntSetBaseDirectory']) + `: ${error}`));
 		}
 		else if (this.id === COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES)
 		{
@@ -527,11 +527,11 @@ class MyQuickPickOpenAsWorkspaceCommandItem extends MyQuickPickAcceptableItem
 	constructor(aDirectory: string)
 	{
 		super();
-		this.label = COMMAND_LABEL_PREFIX + i18n(i18nTexts, 'openDirectoryAsWorkspace');
+		this.label = COMMAND_LABEL_PREFIX + i18n(MESSAGES.openDirectoryAsWorkspace);
 		this.description = '';
 		this._directory = aDirectory;
 
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('empty-window'), tooltip: i18n(i18nTexts, 'openDirectoryAsWorkspaceInNewWindow'), id: '' });
+		this.buttons.push({ iconPath: new vscode.ThemeIcon('empty-window'), tooltip: i18n(MESSAGES.openDirectoryAsWorkspaceInNewWindow), id: '' });
 	}
 
 	override didAccept(quickPick: vscode.QuickPick<vscode.QuickPickItem>): void
@@ -566,14 +566,14 @@ class MyQuickPickInputPathItem extends MyQuickPickAcceptableItem
 	constructor()
 	{
 		super();
-		this.label = COMMAND_LABEL_PREFIX + i18n(i18nTexts, 'inputPathCommand.label');
+		this.label = COMMAND_LABEL_PREFIX + i18n(MESSAGES['inputPathCommand.label']);
 		this.description = '';
 	}
 
 	override didAccept(quickPick: vscode.QuickPick<vscode.QuickPickItem>): void
 	{
 		// QuickPick をパス入力用に変更
-		quickPick.title = i18n(i18nTexts, 'inputPathCommand.label');
+		quickPick.title = i18n(MESSAGES['inputPathCommand.label']);
 		quickPick.items = [];
 		quickPick.buttons = createQuickPickButtons(quickPick);
 	}
@@ -601,7 +601,7 @@ async function openFileInEdtor(fullPath: string)
 	}
 	catch (error)
 	{
-		vscode.window.showErrorMessage(i18n(i18nTexts, 'couldNotOpenFile') + `: ${error}`);
+		vscode.window.showErrorMessage(i18n(MESSAGES.couldNotOpenFile) + `: ${error}`);
 	}
 }
 
@@ -700,15 +700,15 @@ function createQuickPickButtons(quickPick: vscode.QuickPick<vscode.QuickPickItem
 	{
 		const groupDirectories = config.get(CONFIG_KEY_GROUP_DIRECTORIES) as boolean;
 		result.push(groupDirectories ?
-			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(i18nTexts, 'tooltip.ungroupDirectories') } :
-			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(i18nTexts, 'tooltip.groupDirectories') });
+			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(MESSAGES['tooltip.ungroupDirectories']) } :
+			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(MESSAGES['tooltip.groupDirectories']) });
 	}
 
 	// 隠しファイルの表示設定ボタン
 	const showHiddenFiles = config.get(CONFIG_KEY_SHOW_HIDDEN_FILES);
 	result.push(showHiddenFiles ?
-		{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(i18nTexts, 'tooltip.hideHiddenFiles') } :
-		{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(i18nTexts, 'tooltip.showHiddenFiles') });
+		{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(MESSAGES['tooltip.hideHiddenFiles']) } :
+		{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(MESSAGES['tooltip.showHiddenFiles']) });
 
 	return result;
 }
@@ -747,7 +747,7 @@ function getBaseDirectoryFromConfig(): string
  */
 function getPlaceholderText(): string
 {
-	return `${i18n(i18nTexts, 'baseDirectory')}: ${maskUserNameDirectory(getBaseDirectoryFromConfig())}`;
+	return `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(getBaseDirectoryFromConfig())}`;
 }
 
 
@@ -845,11 +845,11 @@ function listFilesInDirectory(directory: string): ListFilesResult
  * @param labelKey アイテムのラベルの文字列リソースのキー。
  * @param targetDir 移動先のディレクトリ。
  */
-function addGotoDirectoryItem(items: vscode.QuickPickItem[], directory: string, labelKey: string, targetDir: string): void
+function addGotoDirectoryItem(items: vscode.QuickPickItem[], directory: string, label: I18NText, targetDir: string): void
 {
 	if (targetDir !== '' && targetDir !== directory)
 	{
-		items.push(new MyQuickPickCommandItem(i18n(i18nTexts, labelKey), maskUserNameDirectory(targetDir), '', COMMAND_ID_GOTO_DIRECTORY, targetDir));
+		items.push(new MyQuickPickCommandItem(i18n(label), maskUserNameDirectory(targetDir), '', COMMAND_ID_GOTO_DIRECTORY, targetDir));
 	}
 }
 
@@ -938,14 +938,14 @@ function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPic
 	if (groupDirectories)
 	{
 		// まずディレクトリ
-		quickPickItems.push({ label: i18n(i18nTexts, 'directories'), kind: vscode.QuickPickItemKind.Separator });
+		quickPickItems.push({ label: i18n(MESSAGES.directories), kind: vscode.QuickPickItemKind.Separator });
 		quickPickItems.push(new MyQuickPickDirectoryItem(new MyFileInfo(path.dirname(directory), true), true, baseDir));
 		files.filter(fileInfo => fileInfo.isDirectory).forEach((fileInfo) => {
 			quickPickItems.push(new MyQuickPickDirectoryItem(fileInfo, false, baseDir));
 		});
 
 		// 次にファイル
-		quickPickItems.push({ label: i18n(i18nTexts, 'files'), kind: vscode.QuickPickItemKind.Separator });
+		quickPickItems.push({ label: i18n(MESSAGES.files), kind: vscode.QuickPickItemKind.Separator });
 		quickPickItems.push(new MyQuickPickFileItem(new MyFileInfo(directory, false), true, baseDir));
 		files.filter(fileInfo => !fileInfo.isDirectory).forEach((fileInfo) => {
 				quickPickItems.push(new MyQuickPickFileItem(fileInfo, false, baseDir));
@@ -975,18 +975,18 @@ function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPic
 	// ------------------------------------------------------------
 	// その他コマンドを追加
 
-	quickPickItems.push({ label: i18n(i18nTexts, 'commands'), kind: vscode.QuickPickItemKind.Separator });
+	quickPickItems.push({ label: i18n(MESSAGES.commands), kind: vscode.QuickPickItemKind.Separator });
 
 	// 基準ディレクトリを設定するコマンド。表示しているのが基準ディレクトリの場合は追加しない。
 	if (baseDir !== directory)
 	{
-		quickPickItems.push(new MyQuickPickCommandItem(i18n(i18nTexts, 'command.setBaseDirectory'), '', '', COMMAND_ID_SET_BASE_DIRECTORY, directory));
+		quickPickItems.push(new MyQuickPickCommandItem(i18n(MESSAGES[ 'command.setBaseDirectory']), '', '', COMMAND_ID_SET_BASE_DIRECTORY, directory));
 	}
 
 	// 基準ディレクトリをクリアするコマンド。すでに基準ディレクトリが空なら追加しない。
 	if (baseDir !== '')
 	{
-		quickPickItems.push(new MyQuickPickCommandItem(i18n(i18nTexts, 'command.clearBaseDirectory'), '', '', COMMAND_ID_CLEAR_BASE_DIRECTORY));
+		quickPickItems.push(new MyQuickPickCommandItem(i18n(MESSAGES['command.clearBaseDirectory']), '', '', COMMAND_ID_CLEAR_BASE_DIRECTORY));
 	}
 
 	// パスを入力して移動するコマンド
@@ -994,17 +994,17 @@ function createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPic
 
 	// 隠しファイルの表示を切り替えるコマンド
 	const showHiddenFiles = config.get<string>(CONFIG_KEY_SHOW_HIDDEN_FILES);
-	quickPickItems.push(new MyQuickPickCommandItem(i18n(i18nTexts, showHiddenFiles ? 'hideHiddenFiles' : 'showHiddenFiles'), '', '', COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES, directory));
+	quickPickItems.push(new MyQuickPickCommandItem(i18n(MESSAGES[showHiddenFiles ? 'hideHiddenFiles' : 'showHiddenFiles']), '', '', COMMAND_ID_TOGGLE_SHOW_HIDDEN_FILES, directory));
 
 	// ワークスペース、編集中のファイル、ユーザーのディレクトリへそれぞれ移動するコマンド
-	addGotoDirectoryItem(quickPickItems, directory, 'gotoWorkspaceDir', getWorkspaceDirectory());
+	addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoWorkspaceDir, getWorkspaceDirectory());
 	const activeEditorDirectory = ryutils.getActiveEditorDirectory();
 	if (activeEditorDirectory)
 	{
-		addGotoDirectoryItem(quickPickItems, directory, 'gotoEditingFileDir', activeEditorDirectory);
+		addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoEditingFileDir, activeEditorDirectory);
 	}
-	addGotoDirectoryItem(quickPickItems, directory, 'gotoUserDir', os.homedir());
-	addGotoDirectoryItem(quickPickItems, directory, 'backtoBaseDir', getBaseDirectoryFromConfig());
+	addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoUserDir, os.homedir());
+	addGotoDirectoryItem(quickPickItems, directory, MESSAGES.backtoBaseDir, getBaseDirectoryFromConfig());
 
 	// このディレクトリをワークスペースとして開くコマンド
 	quickPickItems.push(new MyQuickPickOpenAsWorkspaceCommandItem(directory));
@@ -1139,7 +1139,7 @@ function toggleGroupDirectories(quickPick: vscode.QuickPick<vscode.QuickPickItem
  */
 function isInCDMode(quickPick: vscode.QuickPick<vscode.QuickPickItem>): boolean
 {
-	return quickPick.title === i18n(i18nTexts, 'inputPathCommand.label');
+	return quickPick.title === i18n(MESSAGES['inputPathCommand.label']);
 }
 
 
