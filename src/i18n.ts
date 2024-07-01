@@ -106,8 +106,19 @@ class COMMON_TEXTS_CLASS
 			other: 'fichiers',
 			singular: 'fichier'
 		},
-		zh: {
+		es: {
+			other: 'archivos',
+			singular: 'archivo'
+		},
+		'zh-cn': {
 			other: '文件'
+		},
+		'zh-tw': {
+			other: '檔案',
+		},
+		'pt-br': {
+			other: 'arquivos',
+			singular: 'arquivo',
 		},
 		ru: {
 			other: 'файлов',
@@ -139,9 +150,32 @@ class COMMON_TEXTS_CLASS
 				zero: 'comhad',
 			}
 		},
-		cy: {
-			other: 'ffeil'
-		}
+		de: {
+			other: 'Dateien',
+			singular: 'Datei',
+		},
+		it: {
+			other: 'file',	// イタリア語は字面は同じだが発音が異なるらしいので一応…
+			singular: 'file'
+		},
+		cs: {
+			other: 'souborů',
+			singular: 'soubor',
+			cardinals: {
+				few: 'soubory'
+			}
+		},
+		bg: {
+			other: 'файла',
+			singular: 'файл',
+			cardinals: {
+				few: 'файла'
+			}
+		},
+		tr: { other: 'dosya' },
+		hu: { other: 'fájl' },
+		cy: { other: 'ffeil' },
+		ko: { other: '파일' },
 	};
 
 	directories: I18NPluralText =
@@ -157,18 +191,29 @@ class COMMON_TEXTS_CLASS
 			other: 'répertoires',
 			singular: 'répertoire'
 		},
-		zh: {
+		es: {
+			other: 'directorios',
+			singular: 'directorio'
+		},
+		'zh-cn': {
 			other: '目录'
 		},
+		'zh-tw': {
+			other: '目錄'
+		},
+		'pt-br': {
+			other: 'diretórios',
+			singular: 'diretório'
+		},
 		ru: {
-			other: 'каталогов',
-			singular: 'каталог',
+			other: 'директорий',
+			singular: 'директория',
 			cardinals: {
-				few: 'каталога'
+				few: 'директории'
 			}
 		},
 		ar: {
-			other: 'مجلدات',
+			other: 'مجلدًا',
 			singular: 'مجلد',
 			cardinals: {
 				zero: 'مجلدات',
@@ -184,21 +229,81 @@ class COMMON_TEXTS_CLASS
 			}
 		},
 		ga: {
-			other: 'comhadlanna',
+			other: 'comhadlann',
 			singular: 'comhadlann',
 			cardinals: {
-				two: 'chomhadlann',
-				few: 'chomhadlanna'
+				zero: 'comhadlann',
+				few: 'chomhadlann'
 			}
 		},
+		de: { other: 'Verzeichnisse', singular: 'Verzeichnis' },
+		it: { other: 'directory', singular: 'directory' },
+		cs: {
+			other: 'adresáře',
+			singular: 'adresář',
+			cardinals: { few: 'adresáře' }
+		},
+		bg: {
+			other: 'директории',
+			singular: 'директория',
+			cardinals: { few: 'директории' }
+		},
+		tr: { other: 'dizin' },
+		hu: { other: 'könyvtár' },
 		cy: {
-			other: 'cyfeiriaduron',
-			singular: 'cyfeiriadur',
+			other: 'cyfeiriadur'
+		},
+		ko: { other: '디렉토리' }
+	};
+
+	items: I18NPluralText = {
+		ja: { other: 'アイテム' },
+		en: { other: 'items', singular: 'item' },
+		fr: { other: 'éléments', singular: 'élément' },
+		es: { other: 'elementos', singular: 'elemento' },
+		'zh-cn': { other: '项目' },
+		'zh-tw': { other: '項目' },
+		'pt-br': { other: 'itens', singular: 'item' },
+		ru: {
+			other: 'элементов',
+			singular: 'элемент',
+			cardinals: { few: 'элемента' }
+		},
+		ar: {
+			other: 'عنصرًا',
+			singular: 'عنصر',
 			cardinals: {
-				two: 'gyfeiriadur',
-				few: 'chyfeiriadur'
+				zero: 'عناصر',
+				two: 'عنصران',
+				few: 'عناصر'
 			}
-		}
+		},
+		pl: {
+			other: 'elementów',
+			singular: 'element',
+			cardinals: { few: 'elementy' }
+		},
+		ga: {
+			other: 'mhír',
+			singular: 'mír',
+			cardinals: { zero: 'mír' }
+		},
+		de: { other: 'Elemente', singular: 'Element' },
+		it: { other: 'elementi', singular: 'elemento' },
+		cs: {
+			other: 'položky',
+			singular: 'položka',
+			cardinals: { few: 'položky' }
+		},
+		bg: {
+			other: 'елемента',
+			singular: 'елемент',
+			cardinals: { few: 'елемента' }
+		},
+		tr: { other: 'öğe' },
+		hu: { other: 'elem' },
+		cy: { other: 'eitem' },
+		ko: { other: '항목' }
 	};
 
 	showErrorDetailButtonCaption: I18NText =
@@ -329,12 +434,27 @@ export function i18n(message: I18NText, values: Record<string, string> = {}): st
  */
 export function i18nPluralWithLocale(message: I18NPluralText, n: number, localeKey: string): string
 {
+	type PluralForm = 'singular' | 'other' | Cardinal;
+	type PluralFormFunction = (count: number) => PluralForm;
+
+	const PLURAL_FUNCTIONS: Record<string, PluralFormFunction> =
+	{
+		ar: getArabicForm,
+		bg: getBulgarianForm,
+		ru: getRussianForm,
+		pl: getPolishForm,
+		ga: getIrishForm,
+		cy: getWelshForm,
+		cs: getCzechForm,
+		fr: getFrenchForm,
+	};
+
 	/**
-	 * アラビア語の複数形を取得する。
+	 * アラビア語(ar)の複数形を取得する。
 	 * @param count 数値。
 	 * @returns 複数形の種類を返す。
 	 */
-	function getArabicForm(count: number): 'singular' | 'other' | Cardinal
+	function getArabicForm(count: number): PluralForm
 	{
 		if (count === 0)
 		{
@@ -381,6 +501,162 @@ export function i18nPluralWithLocale(message: I18NPluralText, n: number, localeK
 	}
 
 	/**
+	 * ブルガリア語(bg)の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getBulgarianForm(count: number): PluralForm
+	{
+		if (count === 1)
+		{
+			return 'singular';
+		}
+		else if (count % 10 === 1 && count % 100 !== 11)
+		{
+			return 'singular'; // 21, 31, 41, ..., 91, 101, 121, ...
+		}
+		else if ((count % 10 === 2 || count % 10 === 3 || count % 10 === 4) &&
+			(count % 100 !== 12 && count % 100 !== 13 && count % 100 !== 14))
+		{
+			return 'few'; // 2-4, 22-24, 32-34, ..., 92-94, 102-104, ...
+		}
+		else
+		{
+			return 'other'; // 0, 5-20, 25-30, 35-40, ..., 95-100, 105-120, ...
+		}
+	}
+
+	/**
+	 * ロシア語(ru)の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getRussianForm(count: number): PluralForm
+	{
+		// ロシア語ルール
+		// 1で終わる数（11以外）はsingular, 末尾2~4で終わる場合はfew（ただし12~14を除く）, それ以外はother
+		if (count % 10 === 1 && count % 100 !== 11)
+		{
+			return 'singular';
+		}
+		else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
+		{
+			return 'few';
+		}
+		else
+		{
+			return 'other';
+		}
+	}
+
+	/**
+	 * ポーランド語(pl)の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getPolishForm(count: number): PluralForm
+	{
+		// ポーランド語ルール
+		// 1はsingular, 2~4で終わる数（ただし12~14を除く）はfew, それ以外はother
+		if (count === 1)
+		{
+			return 'singular';
+		}
+		else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
+		{
+			return 'few';
+		}
+		else
+		{
+			return 'other';
+		}
+	}
+
+	/**
+	 * アイルランド・ゲール語(ga)の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getIrishForm(count: number): PluralForm
+	{
+		// 0はzero, 1はsingular, 2−6はfew, それ以外はother
+		if (count === 1)
+		{
+			return 'singular';
+		}
+		else if (count === 0)
+		{
+			return 'zero';
+		}
+		else if (2 <= count && count <= 6)
+		{
+			return 'few';
+		}
+		else
+		{
+			return 'other';
+		}
+	}
+
+	/**
+	 * ウェールズ語(cy)の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getWelshForm(count: number): PluralForm
+	{
+		// ウェールズ語のルール
+		// 1はsingular, 2はtwo, 3はfew, それ以外はother
+		if (count === 1)
+		{
+			return "singular";
+		}
+		else if (count === 2)
+		{
+			return "two";
+		}
+		else if (count === 3)
+		{
+			return "few";
+		}
+		else
+		{
+			return "other";
+		}
+	}
+
+	/**
+	 * チェコ語(cz)の複数形を取得する。
+	 * @param count
+	 */
+	function getCzechForm(count: number): PluralForm
+	{
+		if (count === 1)
+		{
+			return 'singular';
+		}
+		else if (count >= 2 && count <= 4)
+		{
+			return 'few';
+		}
+
+		// 0と5以上の場合
+		return 'other';
+	}
+
+	function getFrenchForm(count: number): PluralForm
+	{
+		if (count === 1 || count === 0)
+		{
+			return 'singular';
+		}
+		else
+		{
+			return 'other';
+		}
+	}
+
+	/**
 	 * 言語ごとの複数形を取得する。
 	 * @param count 数値。
 	 * @param language 言語のロケールを指定。現状対応しているのは ja, en, fr, zh-cn, ru, pl（ポーランド語）, ga（アイルランド語）, cy（ウェールズ語）のみ。
@@ -393,66 +669,9 @@ export function i18nPluralWithLocale(message: I18NPluralText, n: number, localeK
 		{
 			return 'singular';
 		}
-
-		switch (language)
+		else
 		{
-			// ロシア語ルール
-			// 1で終わる数（11以外）はsingular, 末尾2~4で終わる場合はfew（ただし12~14を除く）, それ以外はother
-			case 'ru':
-				if (count % 10 === 1 && count % 100 !== 11)
-				{
-					return 'singular';
-				}
-				else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
-				{
-					return 'few';
-				}
-				else
-				{
-					return 'other';
-				}
-
-			// ポーランド語ルール
-			// 1はsingular, 2~4で終わる数（ただし12~14を除く）はfew, それ以外はother
-			case 'pl':
-				if (count === 1)
-				{
-					return 'singular';
-				}
-				else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
-				{
-					return 'few';
-				}
-				else
-				{
-					return 'other';
-				}
-
-			// アイルランド語ルール
-			// 0はzero, 1はsingular（除外済み）, それ以外はother
-			case 'ga':
-				if (count === 0)
-				{
-					return 'zero';
-				}
-				return 'other';
-
-			// ウェールズ語のルール
-			// 1はsingular（除外済み）, 2はtwo, 3はfew, それ以外はother
-			case "cy":
-				if (count === 2)
-				{
-					return "two";
-				}
-				if (count === 3)
-				{
-					return "few";
-				}
-				return "other";
-
-			// その他の未知のものはother
-			default:
-				return "other";
+			return 'other';
 		}
 	}
 
@@ -469,9 +688,9 @@ export function i18nPluralWithLocale(message: I18NPluralText, n: number, localeK
 	else
 	{
 		let form;
-		if (localeKey === 'ar')
+		if (PLURAL_FUNCTIONS.hasOwnProperty(localeKey))
 		{
-			form = getArabicForm(n);
+			form = PLURAL_FUNCTIONS[localeKey](n);
 		}
 		else
 		{
