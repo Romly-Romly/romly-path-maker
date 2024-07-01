@@ -7,7 +7,10 @@ import * as path from 'path';
 
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
-import * as myinterfaces from './myinterfaces';
+
+import { MyQuickPick, CONFIGURATION_NAME, CONFIG_KEY_LAST_DIRECTORY, RyFavoriteQuickPick } from './myQuickPick';
+import { i18n } from './i18n';
+import { MESSAGES } from './i18nTexts';
 
 
 
@@ -89,7 +92,7 @@ function ensureAbsolutePath(inputPath: string): string
  */
 function getStartDirectory(): string
 {
-	const config = vscode.workspace.getConfiguration(myinterfaces.CONFIGURATION_NAME);
+	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 	const startDirectory = <string>config.get(CONFIG_KEY_START_DIRECTORY);
 
 	// 共通のフォールバックディレクトリ
@@ -98,7 +101,7 @@ function getStartDirectory(): string
 	if (startDirectory === 'Last')
 	{
 		// 最後に表示したディレクトリを取得。取得した値は必ず絶対パスだと想定する。
-		const lastDirectory = ensureAbsolutePath(config.get<string>(myinterfaces.CONFIG_KEY_LAST_DIRECTORY) ?? '');
+		const lastDirectory = ensureAbsolutePath(config.get<string>(CONFIG_KEY_LAST_DIRECTORY) ?? '');
 
 		// ディレクトリが存在するか確認
 		if (fs.existsSync(lastDirectory))
@@ -108,12 +111,12 @@ function getStartDirectory(): string
 		else
 		{
 			console.log(`Romly Path Maker: Last directory not found: ${lastDirectory}`);
-			return myinterfaces.getWorkspaceDirectory() || ryutils.getActiveEditorDirectory() || fallbackDir;
+			return ryutils.getWorkspaceDirectory() || ryutils.getActiveEditorDirectory() || fallbackDir;
 		}
 	}
 	else if (startDirectory === 'Workspace')
 	{
-		return myinterfaces.getWorkspaceDirectory() || ryutils.getActiveEditorDirectory() || fallbackDir;
+		return ryutils.getWorkspaceDirectory() || ryutils.getActiveEditorDirectory() || fallbackDir;
 	}
 	else if (startDirectory === 'Editor')
 	{
@@ -141,13 +144,27 @@ export function activate(context: vscode.ExtensionContext)
 	// コマンドは package.json ファイルで定義されている
 	// 次に、 registerCommand を使用してコマンドの実装を提供する
 	// commandId パラメータは package.json の command フィールドと一致する必要がある
-	let disposable = vscode.commands.registerCommand('romly-path-maker.show', () =>
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.show', () =>
 	{
-		myinterfaces.showFilesInQuickPick(getStartDirectory());
-	});
+		MyQuickPick.createMyQuickPick(getStartDirectory());
+	}));
 
-	context.subscriptions.push(disposable);
+	// お気に入り表示コマンド
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showFavorites', () =>
+	{
+		const quickPick = new RyFavoriteQuickPick();
+		if (quickPick.numFavorites > 0)
+		{
+			quickPick.show();
+		}
+		else
+		{
+			vscode.window.showInformationMessage(i18n(MESSAGES.noFavorites));
+		}
+	}));
 }
 
 // このメソッドは拡張機能が無効化されたときに呼び出される
-export function deactivate() {}
+export function deactivate()
+{
+}

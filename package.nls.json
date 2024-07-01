@@ -15,5 +15,7 @@
 	"defaultAction.editor": "Insert file path to active editor.",
 	"defaultAction.terminal": "Insert file path to active terminal.",
 	"defaultAction.reveal": "Reveal file in the File Explorer or Finder.",
-	"hideUserName": "Mask the directory name of the user name in the pathes."
+	"hideUserName": "Mask the directory name of the user name in the pathes.",
+	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
+	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
 }

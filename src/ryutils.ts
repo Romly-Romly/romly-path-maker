@@ -76,6 +76,38 @@ export function sendTextToTerminal(text: string)
 
 
 /**
+ * OSと言語に応じたエクスプローラーの名前を返す。
+ * @returns OSに応じたエクスプローラーの名前。Windowsなら エクスプローラー(Explorer)、Macなら日英ともにFinder、LinuxならFileManager
+ */
+export function getOsDependentExplorerAppName(): string
+{
+	if (process.platform === 'win32')
+	{
+		// Windows
+		return i18n(COMMON_TEXTS.windowsExplorer);
+	}
+	else if (process.platform === 'darwin')
+	{
+		// Mac
+		return i18n(COMMON_TEXTS.macFinder);
+	}
+	else
+	{
+		// Linux
+		return i18n(COMMON_TEXTS.linuxFileManager);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
  * 指定されたパスのディレクトリをOSのファイルマネージャで開く。
  * @param path - 開きたいディレクトリのパス。
  */
@@ -96,6 +128,35 @@ export function openDirectory(path: string): void
 	{
 		// Linuxの場合、nautilusでディレクトリを開く（デフォルトのファイルマネージャを使用）
 		exec(`nautilus "${path}"`);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * ワークスペースのディレクトリを取得する
+ * @returns {string} ワークスペースディレクトリのパス。ワークスペースが存在しない場合は空の文字列を返す。
+ */
+export function getWorkspaceDirectory(): string
+{
+	const folders = vscode.workspace.workspaceFolders;
+	if (folders && folders.length > 0)
+	{
+		// 複数ある場合は最初のワークスペースフォルダを使用
+		const workspacePath = folders[0].uri.fsPath;
+		return workspacePath;
+	}
+	else
+	{
+		// ワークスペースのディレクトリが見つからなかった
+		return '';
 	}
 }
 
@@ -170,17 +231,26 @@ export interface RyQuickPickButton extends vscode.QuickInputButton
  * @param errorMessage `vscode.window.showErrorMessage` で表示するエラーメッセージ。
  * @param extensionName 詳細を表示する時に出力チャンネルを識別するための拡張機能の名前。 `createOutputChannel` で使用する。
  * @param debugErrorMessage 出力チャンネルに最初に表示するエラーメッセージ。
- * @param error 出力チャンネルに表示する Error オブジェクト。
+ * @param error 出力チャンネルに表示する Error オブジェクト、またはcatchしたものをそのまま渡せるように unknow にも対応。
  */
-export function showErrorMessageWithDetailChannel(errorMessage: string, extensionName: string, debugErrorMessage: string, error: Error)
+export function showErrorMessageWithDetailChannel(errorMessage: string, extensionName: string, debugErrorMessage: string, error: Error | unknown)
 {
 	vscode.window.showErrorMessage(errorMessage, i18n(COMMON_TEXTS.showErrorDetailButtonCaption)).then(() =>
 	{
 		// エラー詳細を Output Channel に表示
 		const channel = vscode.window.createOutputChannel(extensionName);
-		channel.appendLine(debugErrorMessage);
-		channel.appendLine(`Error Message: ${error.message}`);
-		channel.appendLine(`Stack Trace: ${error.stack}`);
+		if (error instanceof Error)
+		{
+			channel.appendLine(debugErrorMessage);
+			channel.appendLine(`Error Message: ${error.message}`);
+			channel.appendLine(`Stack Trace: ${error.stack}`);
+		}
+		else
+		{
+			channel.appendLine(debugErrorMessage);
+			channel.appendLine(`Type: ${typeof error}`);
+			channel.appendLine(`Value: ${error}`);
+		}
 		channel.show();
 	});
 }

@@ -2,7 +2,7 @@
 	"name": "romly-path-maker",
 	"displayName": "Romly Path Maker",
 	"description": "コマンドパレット上でディレクトリを探索し、選択したファイルのパスをターミナルに挿入したり、クリップボードにコピーできる拡張機能です。",
-	"version": "1.2.2",
+	"version": "1.3.0",
 	"publisher": "Romly",
 	"engines": {
 		"vscode": "^1.90.0"
@@ -26,6 +26,11 @@
 			{
 				"command": "romly-path-maker.show",
 				"title": "Path Maker",
+				"category": "Romly"
+			},
+			{
+				"command": "romly-path-maker.showFavorites",
+				"title": "Path Maker - Favorites",
 				"category": "Romly"
 			}
 		],
@@ -95,6 +100,20 @@
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "%hideUserName%"
+				},
+				"romly-path-maker.pinnedList":
+				{
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"markdownDescription": "%pinnedList%"
+				},
+				"romly-path-maker.favoriteList":
+				{
+					"type": "array",
+					"items": { "type": "string" },
+					"default": [],
+					"markdownDescription": "%favoriteList%"
 				}
 			}
 		}

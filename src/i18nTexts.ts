@@ -2,16 +2,6 @@ import { I18NText } from "./i18n";
 
 class ProjectMessages
 {
-	files: I18NText =
-	{
-		ja: 'ファイル',
-		en: 'Files'
-	};
-	directories: I18NText =
-	{
-		ja: 'ディレクトリ',
-		en: 'Directories'
-	};
 	copyPathToClipboard: I18NText =
 	{
 		ja: 'パスをクリップボードにコピーする',
@@ -117,16 +107,17 @@ class ProjectMessages
 		ja: '基準ディレクトリを設定しました: {dir}',
 		en: 'Base directory is set: {dir}',
 	};
+	baseDirectoryCleared: I18NText =
+	{
+		ja: '基準ディレクトリをクリアしました。',
+		en: 'Base directory is cleared.',
+	};
 	'error.couldntSetBaseDirectory': I18NText =
 	{
 		ja: '基準ディレクトリを設定できませんでした',
 		en: "Couldn't set base directory",
 	};
-	openDirectoryAsWorkspace: I18NText =
-	{
-		ja: 'このディレクトリをCodeで開く',
-		en: 'Open this directory in Code',
-	};
+
 	openDirectoryAsWorkspaceInNewWindow: I18NText =
 	{
 		ja: 'このディレクトリを新しいウインドウで開く',
@@ -142,6 +133,15 @@ class ProjectMessages
 		ja: 'パスを入力して移動',
 		en: 'Go to input path',
 	};
+
+	revealInExplorerCommandLabel: I18NText =
+	{
+		ja: 'このディレクトリを{app}で開く',
+		en: 'Open this directory in {app}',
+		fr: "Ouvrir ce répertoire dans {app}",
+		'zh-cn': '在{app}中打开此目录',
+	};
+
 	'error.directoryNotFound': I18NText =
 	{
 		ja: 'ディレクトリ {dir} は存在しません。',
@@ -151,6 +151,72 @@ class ProjectMessages
 	{
 		ja: '{dir} 内のファイル取得に失敗しました。',
 		en: 'Failed to get files in "{dir}".',
+	};
+
+	pinThis: I18NText =
+	{
+		ja: 'クイックアクセスにピン留めする',
+		en: 'Pin to quick access',
+	};
+
+	unpinThis: I18NText =
+	{
+		ja: 'クイックアクセスからピン留めを解除',
+		en: 'Unpin from quick access',
+	};
+
+	addToFavorite: I18NText =
+	{
+		ja: 'お気に入りに追加する',
+		en: 'Add to favorites',
+	};
+
+	removeFromFavorite: I18NText =
+	{
+		ja: 'お気に入りから削除する',
+		en: 'Remove from favorites',
+	};
+
+	failedToWritePinnedList: I18NText =
+	{
+		ja: 'クイックアクセスの書き込みに失敗しました。',
+		en: 'Failed to write the quick access list.',
+	};
+
+	failedToWriteFavoriteList: I18NText =
+	{
+		ja: 'お気に入りの書き込みに失敗しました。',
+		en: 'Failed to write the favorite list.',
+	};
+
+	quickAccesses: I18NText =
+	{
+		ja: 'クイックアクセス',
+		en: 'Quick Access',
+	};
+
+	favoriteQuickPickTitle: I18NText =
+	{
+		ja: 'お気に入り',
+		en: 'Favorites',
+	};
+
+	directoryNotFoundItemLabel: I18NText =
+	{
+		ja: 'ディレクトリが見付かりません。',
+		en: 'The directory not found.',
+	};
+
+	backToBrowseModeItemLabel: I18NText =
+	{
+		ja: '{dir} に戻る',
+		en: 'Back to "{dir}"',
+	};
+
+	noFavorites: I18NText =
+	{
+		ja: 'お気に入りがありません。',
+		en: 'No favorite items.',
 	};
 };
 

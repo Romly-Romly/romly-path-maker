@@ -10,6 +10,41 @@ export interface I18NText
 
 
 
+
+
+
+
+
+type Cardinal = 'zero' /* zero form */ | 'two' /*双数形(dual)*/ | 'few' /*少数複数形(paucal)*/;
+
+/**
+ * 必要に応じて複数形を保持できる文字列。
+ * 基本的な複数形のみは必須。
+ */
+interface PluralRule
+{
+	// 基本的な複数形、またはルールに当てはまらないすべての数の場合の文字列
+	other: string;
+	// 単数形（オプション）
+	singular?: string;
+	// その他の複数形（オプション）
+	cardinals?: Partial<Record<Cardinal, string>>;
+}
+
+/**
+ * 各言語について複数形を保持できる文字列リソースひとつ分を表すインターフェース。
+ */
+export interface I18NPluralText
+{
+	ja: PluralRule;
+	en: PluralRule;
+	[key: string]: PluralRule;
+}
+
+
+
+
+
 /**
  * 共通の文字列リソース。
  * 文字列のキーがIDEでエラーになるよう、クラスにしてそれぞれの文字列をプロパティとした。
@@ -23,6 +58,7 @@ class COMMON_TEXTS_CLASS
 		fr: 'Oui',
 		'zh-cn': '是'
 	};
+
 	search: I18NText =
 	{
 		en: 'Search',
@@ -30,6 +66,141 @@ class COMMON_TEXTS_CLASS
 		fr: 'Rechercher',
 		'zh-cn': '搜索'
 	};
+
+	windowsExplorer: I18NText =
+	{
+		ja: 'エクスプローラー',
+		en: 'File Explorer',
+		fr: "l'Explorateur",
+		'zh-cn': '文件资源管理器'
+	};
+
+	// MacのFinderはどの言語でも `Finder` だった。
+	macFinder: I18NText =
+	{
+		ja: 'Finder',
+		en: 'Finder',
+		fr: 'Finder',
+		'zh-cn': 'Finder'
+	};
+
+	// Linuxはよくわからないや。File Managerでいいかな。
+	linuxFileManager: I18NText =
+	{
+		ja: 'ファイルマネージャー',
+		en: 'File Manager',
+		fr: 'Gestionnaire de fichiers',
+		'zh-cn': '文件管理器'
+	};
+
+	files: I18NPluralText =
+	{
+		ja: {
+			other: 'ファイル'
+		},
+		en: {
+			other: 'files',
+			singular: 'file'
+		},
+		fr: {
+			other: 'fichiers',
+			singular: 'fichier'
+		},
+		zh: {
+			other: '文件'
+		},
+		ru: {
+			other: 'файлов',
+			singular: 'файл',
+			cardinals: {
+				few: 'файла'
+			}
+		},
+		ar: {
+			other: 'ملفًا',
+			singular: 'ملف',
+			cardinals: {
+				zero: 'ملفات',
+				two: 'ملفان',
+				few: 'ملفات'
+			}
+		},
+		pl: {
+			other: 'plików',
+			singular: 'plik',
+			cardinals: {
+				few: 'pliki'
+			}
+		},
+		ga: {
+			other: 'chomhad',
+			singular: 'comhad',
+			cardinals: {
+				zero: 'comhad',
+			}
+		},
+		cy: {
+			other: 'ffeil'
+		}
+	};
+
+	directories: I18NPluralText =
+	{
+		ja: {
+			other: 'ディレクトリ'
+		},
+		en: {
+			other: 'directories',
+			singular: 'directory'
+		},
+		fr: {
+			other: 'répertoires',
+			singular: 'répertoire'
+		},
+		zh: {
+			other: '目录'
+		},
+		ru: {
+			other: 'каталогов',
+			singular: 'каталог',
+			cardinals: {
+				few: 'каталога'
+			}
+		},
+		ar: {
+			other: 'مجلدات',
+			singular: 'مجلد',
+			cardinals: {
+				zero: 'مجلدات',
+				two: 'مجلدان',
+				few: 'مجلدات'
+			}
+		},
+		pl: {
+			other: 'katalogów',
+			singular: 'katalog',
+			cardinals: {
+				few: 'katalogi'
+			}
+		},
+		ga: {
+			other: 'comhadlanna',
+			singular: 'comhadlann',
+			cardinals: {
+				two: 'chomhadlann',
+				few: 'chomhadlanna'
+			}
+		},
+		cy: {
+			other: 'cyfeiriaduron',
+			singular: 'cyfeiriadur',
+			cardinals: {
+				two: 'gyfeiriadur',
+				few: 'chyfeiriadur'
+			}
+		}
+	};
+
 	showErrorDetailButtonCaption: I18NText =
 	{
 		ja: '詳細を表示',
@@ -138,4 +309,207 @@ export function i18n(message: I18NText, values: Record<string, string> = {}): st
 	{
 		return replacePlaceholders(localizedText, values);
 	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 言語ごとの複数形を考慮した「数字＋テキスト」の文字列を取得する。通常はロケールをシステムから自動で取得する `i18nPlural` を使用すること。
+ * @param message 複数の言語とそれぞれの複数形を持つ文字列リソース。
+ * @param n 数値。
+ * @param localeKey 言語のロケールを指定。
+ * @returns
+ */
+export function i18nPluralWithLocale(message: I18NPluralText, n: number, localeKey: string): string
+{
+	/**
+	 * アラビア語の複数形を取得する。
+	 * @param count 数値。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getArabicForm(count: number): 'singular' | 'other' | Cardinal
+	{
+		if (count === 0)
+		{
+			return 'zero';
+		}
+		else if (count === 1)
+		{
+			return 'singular';
+		}
+		else if (count === 2)
+		{
+			return 'two';
+		}
+		else if (3 <= count && count <= 10)
+		{
+			return 'few';
+		}
+		else if (11 <= count && count <= 99)
+		{
+			return 'other';
+		}
+		else
+		{
+			// 100以上の場合
+			const remainder = count % 100;
+
+			if (remainder === 0)
+			{
+				return 'singular';  // 100, 200, 300, etc.
+			}
+			else if (1 <= remainder && remainder <= 2)
+			{
+				return 'singular';  // 101-102, 201-202, etc.
+			}
+			else if (3 <= remainder && remainder <= 10)
+			{
+				return 'few';  // 103-110, 203-210, etc.
+			}
+			else
+			{
+				return 'other';  // 111-199, 211-299, etc.
+			}
+		}
+	}
+
+	/**
+	 * 言語ごとの複数形を取得する。
+	 * @param count 数値。
+	 * @param language 言語のロケールを指定。現状対応しているのは ja, en, fr, zh-cn, ru, pl（ポーランド語）, ga（アイルランド語）, cy（ウェールズ語）のみ。
+	 * @returns 複数形の種類を返す。
+	 */
+	function getForm(count: number, language: string): 'singular' | 'other' | Cardinal
+	{
+		// 日本語と中国語以外では1には単数形を使う。
+		if (count === 1 && language !== 'ja' && language !== 'zh-cn')
+		{
+			return 'singular';
+		}
+
+		switch (language)
+		{
+			// ロシア語ルール
+			// 1で終わる数（11以外）はsingular, 末尾2~4で終わる場合はfew（ただし12~14を除く）, それ以外はother
+			case 'ru':
+				if (count % 10 === 1 && count % 100 !== 11)
+				{
+					return 'singular';
+				}
+				else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
+				{
+					return 'few';
+				}
+				else
+				{
+					return 'other';
+				}
+
+			// ポーランド語ルール
+			// 1はsingular, 2~4で終わる数（ただし12~14を除く）はfew, それ以外はother
+			case 'pl':
+				if (count === 1)
+				{
+					return 'singular';
+				}
+				else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100))
+				{
+					return 'few';
+				}
+				else
+				{
+					return 'other';
+				}
+
+			// アイルランド語ルール
+			// 0はzero, 1はsingular（除外済み）, それ以外はother
+			case 'ga':
+				if (count === 0)
+				{
+					return 'zero';
+				}
+				return 'other';
+
+			// ウェールズ語のルール
+			// 1はsingular（除外済み）, 2はtwo, 3はfew, それ以外はother
+			case "cy":
+				if (count === 2)
+				{
+					return "two";
+				}
+				if (count === 3)
+				{
+					return "few";
+				}
+				return "other";
+
+			// その他の未知のものはother
+			default:
+				return "other";
+		}
+	}
+
+	// ロケールに対応するメッセージを取得
+	const localizedText = message[localeKey] || message['en'] || undefined;
+
+	// enキーすら見つからない場合は必ずエラー
+	if (localizedText === undefined)
+	{
+		const varName = Object.keys({message})[0];
+		const s = COMMON_TEXTS.stringResourceLocaleNotFound;
+		throw new Error(replacePlaceholders(getLocalizedMessage(s, localeKey, s['en']), { key: varName }));
+	}
+	else
+	{
+		let form;
+		if (localeKey === 'ar')
+		{
+			form = getArabicForm(n);
+		}
+		else
+		{
+			form = getForm(n, localeKey);
+		}
+
+		if (form === 'singular' && localizedText.singular)
+		{
+			return n.toString() + ' ' + localizedText.singular;
+		}
+
+		if (form !== 'singular' && form !== 'other' && localizedText.cardinals && localizedText.cardinals[form])
+		{
+			return n.toString() + ' ' + localizedText.cardinals[form]!;
+		}
+
+		return n.toString() + ' ' + localizedText.other;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 言語ごとの複数形を考慮した「数字＋テキスト」の文字列を取得する。
+ * @param message 複数の言語とそれぞれの複数形を持つ文字列リソース。
+ * @param n 数値。
+ * @returns
+ */
+export function i18nPlural(message: I18NPluralText, n: number): string
+{
+	// ロケールを取得
+	const localeKey = JSON.parse(<string>process.env.VSCODE_NLS_CONFIG).locale as string;
+	return i18nPluralWithLocale(message, n, localeKey);
 }
