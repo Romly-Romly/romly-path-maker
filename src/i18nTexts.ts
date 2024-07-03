@@ -67,11 +67,25 @@ class ProjectMessages
 		ja: 'ディレクトリとファイルを分けて表示する。',
 		en: 'Group directories and files.',
 	};
+
 	'tooltip.ungroupDirectories': I18NText =
 	{
 		ja: 'ディレクトリとファイルを分けずに表示する。',
 		en: 'Ungroup directories and files.',
 	};
+
+	'tooltip.absolutePathMode': I18NText =
+	{
+		ja: '絶対パスで表示。',
+		en: 'Show absolute paths.',
+	};
+
+	'tooltip.relativePathMode': I18NText =
+	{
+		ja: '相対パスで表示。',
+		en: 'Show relative paths.',
+	};
+
 	gotoWorkspaceDir: I18NText =
 	{
 		ja: 'ワークスペースのディレクトリに移動',

@@ -19,5 +19,8 @@
 	"hideUserName": "Mask the directory name of the user name in the pathes.",
 	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
 	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
-	"showRelativeRoute": "Displays directories in the path from the base directory (or root directory if not set)."
+	"showRelativeRoute": "Displays directories in the path from the base directory (or root directory if not set).",
+	"pathPresentation": "Path display format.",
+	"pathPresentation.relative": "Display as a relative path from the base directory.",
+	"pathPresentation.absolute": "Display as an absolute path."
 }

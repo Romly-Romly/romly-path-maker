@@ -120,6 +120,14 @@
 					"type": "boolean",
 					"default": true,
 					"markdownDescription": "%showRelativeRoute%"
+				},
+				"romly-path-maker.pathPresentation":
+				{
+					"type": "array",
+					"enum": ["Relative", "Absolute"],
+					"default": "Relative",
+					"markdownEnumDescriptions": ["%pathPresentation.relative%", "%pathPresentation.absolute%"],
+					"markdownDescription": "%pathPresentation%"
 				}
 			}
 		}

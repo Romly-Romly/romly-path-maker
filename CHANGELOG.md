@@ -7,6 +7,7 @@
 ### [unreleased]
 
 #### 追加
+- 絶対パス表示と相対パス表示を切り替える機能を追加。
 - 基準ディレクトリからの経路にあるディレクトリを表示するようにした。
 - 階層をインデントで表すようにした。
 - クイックアクセス機能を追加。アイテムのピンボタンでクイックアクセスにピン留めできます。ピン留めしたアイテムは表示しているディレクトリに関係なく常に表示されるようになります。
@@ -78,6 +79,7 @@
 
 #### Added
 
+- Added a feature to switch between absolute path and relative path.
 - Now displaying directories along the path from the base directory.
 - Implemented indentation to show hierarchical structure.
 - Added the quick access list. You can pin items to the quick access using the pin button. Pinned items will always be displayed regardless of the current directory.

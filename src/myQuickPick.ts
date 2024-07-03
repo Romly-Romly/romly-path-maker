@@ -4,12 +4,11 @@ import * as fs from 'fs';
 import * as os from 'os';
 
 import * as ryutils from './ryutils';
+import { RyConfiguration } from './ryConfiguration';
 import
 {
 	RyQuickPickBase,
 	RyQuickPickItem,
-	CONFIGURATION_NAME,
-	CONFIG_KEY_GROUP_DIRECTORIES,
 	FileListStatus,
 	ListFilesResult,
 	listFilesInDirectory,
@@ -17,12 +16,7 @@ import
 	RyPathQPItem,
 	maskUserNameDirectory,
 	filePathListToFileInfoList,
-	CONFIG_KEY_FAVORITE_LIST,
-	getBaseDirectoryFromConfig,
-	CONFIG_KEY_PIN_LIST,
-	CONFIG_KEY_BASE_DIRECTORY,
 	RyDirectoryQPItem,
-	CONFIG_KEY_SHOW_RELATIVE_ROUTE,
 	filePathToFileInfo,
 	MyFileType,
 } from './ryQuickPickBase';
@@ -41,38 +35,9 @@ import { MESSAGES } from "./i18nTexts";
 
 
 
-// 設定のキー名。package.json の configuration/properties 内のキー名と一致させる。
-export const CONFIG_KEY_LAST_DIRECTORY = 'lastDirectory';
-
 // コマンドのラベルに付く前置詞
 const COMMAND_LABEL_PREFIX = '> ';
 
-
-
-
-
-
-
-
-
-
-
-/**
- * ワークスペースのスコープに設定を書き込む。ワークスペースが見つからなかった場合にはグローバルスコープに書き込む。
- *
- * @param key 設定のキー。
- * @param value 設定する値。
- * @returns 設定が完了すると解決されるPromise。
- */
-async function updateSetting(key: string, value: any): Promise<void>
-{
-	// ワークスペースが開かれているか確認
-	const workspaceFolders = vscode.workspace.workspaceFolders;
-	const targetScope = workspaceFolders ? vscode.ConfigurationTarget.Workspace : vscode.ConfigurationTarget.Global;
-
-	// 設定を更新
-	await vscode.workspace.getConfiguration(CONFIGURATION_NAME).update(key, value, targetScope);
-}
 
 
 
@@ -151,14 +116,21 @@ export class MyQuickPick extends RyQuickPickBase
 
 	private get placeholderText(): string
 	{
-		const baseDir = getBaseDirectoryFromConfig();
-		if (baseDir === '')
+		if (this.getPathPresentation() === 'relative')
 		{
-			return `${i18n(MESSAGES.baseDirectory)}: ${i18n(MESSAGES.baseDirectoryUnset)}`;
+			const baseDir = RyConfiguration.getBaseDirectory();
+			if (baseDir === '')
+			{
+				return `${i18n(MESSAGES.baseDirectory)}: ${i18n(MESSAGES.baseDirectoryUnset)}`;
+			}
+			else
+			{
+				return `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(baseDir)}`;
+			}
 		}
 		else
 		{
-			return `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(baseDir)}`;
+			return '';
 		}
 	}
 
@@ -171,7 +143,7 @@ export class MyQuickPick extends RyQuickPickBase
 		}
 
 		// 最後に表示したディレクトリとして設定に保存しておく
-		updateSetting(CONFIG_KEY_LAST_DIRECTORY, directory).catch((error) => console.error(error));
+		RyConfiguration.setLastDirectory(directory).catch((error) => console.error(error));
 
 		return new MyQuickPick(files, directory);
 	}
@@ -288,19 +260,17 @@ export class MyQuickPick extends RyQuickPickBase
 	private createQuickPickItems(listFilesResult: ListFilesResult): vscode.QuickPickItem[]
 	{
 		// ディレクトリとファイルを分ける？
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const groupDirectories = config.get<boolean>(CONFIG_KEY_GROUP_DIRECTORIES);
-
+		const groupDirectories = RyConfiguration.getGroupDirectories();
 		const directory = listFilesResult.path;
 		const files = listFilesResult.files;
-		const baseDir = getBaseDirectoryFromConfig();
-		const showRoute = config.get<boolean>(CONFIG_KEY_SHOW_RELATIVE_ROUTE);
+		const baseDir = RyConfiguration.getBaseDirectory();
+		const showRoute = RyConfiguration.getShowPathRoute();
 
 		const quickPickItems: vscode.QuickPickItem[] = [];
 
 		let showDoubleDot = false;
 		let indent: number;
-		if (baseDir !== '')
+		if (this.getPathPresentation() === 'relative' && baseDir !== '')
 		{
 			// 基準ディレクトリが見付からない、ディレクトリでない、エラーの場合
 			const baseDirInfo = filePathToFileInfo(baseDir, false);
@@ -430,7 +400,7 @@ export class MyQuickPick extends RyQuickPickBase
 
 		// ------------------------------------------------------------
 		// ピン留めされているアイテムを追加
-		const pinList = config.get<string[]>(CONFIG_KEY_PIN_LIST) ?? [];
+		const pinList = RyConfiguration.getPinnedList();
 		if (pinList.length > 0)
 		{
 			// まず存在するファイル／ディレクトリのみに絞り込む
@@ -489,6 +459,9 @@ export class MyQuickPick extends RyQuickPickBase
 	{
 		const result: ryutils.RyQuickPickButton[] = [];
 
+		// 絶対パス／相対パス切り替えボタン
+		result.push(this.createTogglePathPresentationButton());
+
 		// ディレクトリとファイルを分けて表示する設定の切り替えボタン
 		result.push(this.createToggleGroupDirectoriesButton());
 
@@ -507,6 +480,7 @@ export class MyQuickPick extends RyQuickPickBase
 		const files = listFilesAndHandleError(this._directory);
 		if (files)
 		{
+			this._theQuickPick.placeholder = this.placeholderText;
 			this._theQuickPick.items = this.createQuickPickItems(files);
 			this._theQuickPick.buttons = this.createQuickPickButtons();
 		}
@@ -515,6 +489,11 @@ export class MyQuickPick extends RyQuickPickBase
 	public override showDirectory(directory: string): void
 	{
 		MyQuickPick.createMyQuickPick(directory);
+	}
+
+	public override onPinnedListChanged(): void
+	{
+		this.updateList();
 	}
 }
 
@@ -578,7 +557,7 @@ class MyQuickPickSetBaseDirectoryItem extends RyQuickPickItem
 	override didAccept(): void
 	{
 		// ベースディレクトリとして設定
-		updateSetting(CONFIG_KEY_BASE_DIRECTORY, this._targetDirectory)
+		RyConfiguration.setBaseDirectory(this._targetDirectory)
 			.then(() =>
 			{
 				if (MyQuickPick.createMyQuickPick((this.ownerQuickPick as MyQuickPick).fullPath))
@@ -755,9 +734,9 @@ export class RyFavoriteQuickPick extends RyQuickPickBase
 		this._numFavorites = 0;
 
 		// お気に入りを読み込む
-		const favorites = vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<string[]>(CONFIG_KEY_FAVORITE_LIST) ?? [];
+		const favorites = RyConfiguration.getFavoriteList();
 		const fileInfos = filePathListToFileInfoList(favorites);
-		const baseDir = getBaseDirectoryFromConfig();
+		const baseDir = RyConfiguration.getBaseDirectory();
 		this._theQuickPick.items = this.convertFileInfosToPathQPItems(fileInfos, baseDir, (item, index) => this._numFavorites++);
 	}
 
@@ -776,6 +755,10 @@ export class RyFavoriteQuickPick extends RyQuickPickBase
 		if (this.numFavorites === 0)
 		{
 			this.dispose();
+		}
+		else
+		{
+			this.updateList();
 		}
 	}
 

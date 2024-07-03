@@ -4,6 +4,7 @@ import * as os from 'os';
 import * as fs from 'fs';
 
 import * as ryutils from './ryutils';
+import { RyConfiguration, RyPathPresentation } from './ryConfiguration';
 
 // 自前の国際化文字列リソースの読み込み
 import { i18n } from "./i18n";
@@ -17,24 +18,6 @@ import { MESSAGES } from "./i18nTexts";
 
 
 
-
-// 拡張機能の設定のセクション名
-export const CONFIGURATION_NAME = 'romly-path-maker';
-
-// 設定のキー名。package.json の configuration/properties 内のキー名と一致させる。
-export const CONFIG_KEY_GROUP_DIRECTORIES = 'groupDirectories';
-const CONFIG_KEY_SHOW_HIDDEN_FILES = 'showHiddenFiles';
-export const CONFIG_KEY_BASE_DIRECTORY = 'baseDirectory';
-const CONFIG_KEY_HIDE_USERNAME = 'hideUserName';
-export const CONFIG_KEY_FAVORITE_LIST = 'favoriteList';
-export const CONFIG_KEY_PIN_LIST = 'pinnedList';
-const CONFIG_KEY_SHOW_DIRECTORY_ICONS = 'showDirectoryIcons';
-const CONFIG_KEY_DEFAULT_ACTION = 'defaultAction';
-export const CONFIG_KEY_SHOW_RELATIVE_ROUTE = 'showRelativeRoute';
-
-//　内部で使用しているQuickPickのボタンの識別子。文字列は識別のみなので何でもおけ。
-const BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
-const BUTTON_ID_TOGGLE_GROUP_DIRECTORIES = 'toggle_group_directories';
 
 export const EXTENSION_NAME_FOR_ERROR = 'Romly: Path-Maker';
 
@@ -62,10 +45,7 @@ export function maskUserNameDirectory(pathString: string): string
 		return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $&はマッチした全文字列を意味する
 	}
 
-	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	const hideUserName = config.get<boolean>(CONFIG_KEY_HIDE_USERNAME);
-
-	if (hideUserName)
+	if (RyConfiguration.getHideUserName())
 	{
 		const username = path.basename(os.homedir());
 		const escapedUsername = escapeRegExp(username);
@@ -77,25 +57,6 @@ export function maskUserNameDirectory(pathString: string): string
 	{
 		return pathString;
 	}
-}
-
-
-
-
-
-
-
-
-
-
-/**
- * 基準ディレクトリを設定から読み込んで返す。
- * @returns
- */
-export function getBaseDirectoryFromConfig(): string
-{
-	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	return config.get<string>(CONFIG_KEY_BASE_DIRECTORY) ?? '';
 }
 
 
@@ -266,8 +227,7 @@ export class ListFilesResult
  */
 export function listFilesInDirectory(directory: string): ListFilesResult
 {
-	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	const filterHiddenFiles = !config.get<boolean>(CONFIG_KEY_SHOW_HIDDEN_FILES);
+	const filterHiddenFiles = !RyConfiguration.getShowHiddenFiles();
 
 	// ディレクトリの存在チェック
 	if (!fs.existsSync(directory))
@@ -320,6 +280,11 @@ export function listFilesInDirectory(directory: string): ListFilesResult
  */
 export abstract class RyQuickPickBase
 {
+	//　内部で使用しているQuickPickのボタンの識別子。文字列は識別のみなので何でもおけ。
+	private readonly BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
+	private readonly BUTTON_ID_TOGGLE_PATH_PRESENTATION = 'togglePathPresentation';
+	private readonly BUTTON_ID_TOGGLE_GROUP_DIRECTORIES = 'toggle_group_directories';
+
 	protected readonly _theQuickPick: vscode.QuickPick<vscode.QuickPickItem>;
 
 	constructor()
@@ -330,15 +295,20 @@ export abstract class RyQuickPickBase
 		this._theQuickPick.onDidTriggerButton((button) =>
 		{
 			const buttonId = (button as ryutils.RyQuickPickButton).id;
-			if (buttonId === BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES)
+			if (buttonId === this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES)
 			{
 				// 隠しファイルの表示設定を切り替える
 				this.showHiddenFiles = !this.showHiddenFiles;
 			}
-			else if (buttonId === BUTTON_ID_TOGGLE_GROUP_DIRECTORIES)
+			else if (buttonId === this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES)
 			{
 				// ディレクトリのグループ表示設定を切り替える
 				this.toggleGroupDirectories();
+			}
+			else if (buttonId === this.BUTTON_ID_TOGGLE_PATH_PRESENTATION)
+			{
+				// パスの表示形式を切り替える
+				this.setPathPresentation(this.getPathPresentation() === 'relative' ? 'absolute' : 'relative');
 			}
 		});
 
@@ -369,8 +339,7 @@ export abstract class RyQuickPickBase
 
 	private toggleGroupDirectories()
 	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		config.update(CONFIG_KEY_GROUP_DIRECTORIES, !config.get(CONFIG_KEY_GROUP_DIRECTORIES), vscode.ConfigurationTarget.Global).then(() =>
+		RyConfiguration.setGroupDirectories(!RyConfiguration.getGroupDirectories()).then(() =>
 		{
 			// 設定の変更に伴うQuickPick自体の更新
 			this.updateList();
@@ -379,20 +348,23 @@ export abstract class RyQuickPickBase
 
 	protected createToggleGroupDirectoriesButton(): ryutils.RyQuickPickButton
 	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const groupDirectories = config.get(CONFIG_KEY_GROUP_DIRECTORIES) as boolean;
-		return groupDirectories ?
-			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(MESSAGES['tooltip.ungroupDirectories']) } :
-			{ id: BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(MESSAGES['tooltip.groupDirectories']) };
+		return RyConfiguration.getGroupDirectories() ?
+			{ id: this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(MESSAGES['tooltip.ungroupDirectories']) } :
+			{ id: this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(MESSAGES['tooltip.groupDirectories']) };
 	}
 
 	protected createShowHiddenFilesButton(): ryutils.RyQuickPickButton
 	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const showHiddenFiles = config.get(CONFIG_KEY_SHOW_HIDDEN_FILES);
-		return showHiddenFiles ?
-			{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(MESSAGES['tooltip.hideHiddenFiles']) } :
-			{ id: BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(MESSAGES['tooltip.showHiddenFiles']) };
+		return RyConfiguration.getShowHiddenFiles() ?
+			{ id: this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(MESSAGES['tooltip.hideHiddenFiles']) } :
+			{ id: this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(MESSAGES['tooltip.showHiddenFiles']) };
+	}
+
+	protected createTogglePathPresentationButton(): ryutils.RyQuickPickButton
+	{
+		return RyConfiguration.getPathPresentation() === 'absolute' ?
+			{ id: this.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-tree'), tooltip: i18n(MESSAGES['tooltip.absolutePathMode']) } :
+			{ id: this.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-flat'), tooltip: i18n(MESSAGES['tooltip.relativePathMode']) };
 	}
 
 	/**
@@ -435,6 +407,10 @@ export abstract class RyQuickPickBase
 	{
 	}
 
+	public onPinnedListChanged(): void
+	{
+	}
+
 	public showDirectory(directory: string): void
 	{
 	}
@@ -453,12 +429,26 @@ export abstract class RyQuickPickBase
 
 	get showHiddenFiles(): boolean
 	{
-		return vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<boolean>(CONFIG_KEY_SHOW_HIDDEN_FILES) ?? false;
+		return RyConfiguration.getShowHiddenFiles();
 	}
 
 	set showHiddenFiles(value: boolean)
 	{
-		vscode.workspace.getConfiguration(CONFIGURATION_NAME).update(CONFIG_KEY_SHOW_HIDDEN_FILES, value, vscode.ConfigurationTarget.Global).then(() =>
+		RyConfiguration.setShowHiddenFiles(value).then(() =>
+		{
+			// 設定の変更に伴うQuickPick自体の更新
+			this.updateList();
+		});
+	}
+
+	protected getPathPresentation(): RyPathPresentation
+	{
+		return RyConfiguration.getPathPresentation();
+	}
+
+	protected setPathPresentation(value: RyPathPresentation)
+	{
+		RyConfiguration.setPathPresentation(value).then(() =>
 		{
 			// 設定の変更に伴うQuickPick自体の更新
 			this.updateList();
@@ -565,8 +555,7 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 */
 	private get amIPinned(): boolean
 	{
-		const pinList = vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<string[]>(CONFIG_KEY_PIN_LIST) ?? [];
-		return pinList.some(listPath => listPath === this.fullPath);
+		return RyConfiguration.isPinned(this.fullPath);
 	}
 
 	/**
@@ -574,47 +563,23 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 */
 	private get amIFavorite(): boolean
 	{
-		const favorites = vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<string[]>(CONFIG_KEY_FAVORITE_LIST) ?? [];
-		return favorites.some(listPath => listPath === this.fullPath);
-	}
-
-	private async saveTheList(listKey: string, theList: string[], errorMessage: string, debugErrorMessage: string): Promise<void>
-	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		try
-		{
-			await config.update(listKey, theList, vscode.ConfigurationTarget.Global);
-
-			// 書き込みに成功したら表示しているクイックピックを更新する必要がある。
-			this.ownerQuickPick.updateList();
-		}
-		catch (err)
-		{
-			ryutils.showErrorMessageWithDetailChannel(errorMessage, EXTENSION_NAME_FOR_ERROR, debugErrorMessage, err);
-		}
-	}
-
-	private async removeFromTheList(listKey: string, errorMessage: string, debugErrorMessage: string): Promise<void>
-	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const pinList = config.get<string[]>(listKey) ?? [];
-
-		// 一致するもの全て削除
-		const newList = pinList.filter(listPath => listPath !== this.fullPath);
-
-		// 長さが変わっていれば書き込み
-		if (newList.length !== pinList.length)
-		{
-			await this.saveTheList(listKey, newList, errorMessage, debugErrorMessage);
-		}
+		return RyConfiguration.isFavorite(this.fullPath);
 	}
 
 	/**
 	 * このファイル／ディレクトリをクイックアクセスから取り除く。
 	 */
-	private purgeMeFromPinnedList(): void
+	private async purgeMeFromPinnedList(): Promise<void>
 	{
-		this.removeFromTheList(CONFIG_KEY_PIN_LIST, i18n(MESSAGES.failedToWritePinnedList), `Error occurred while updating pinned list.`);
+		try
+		{
+			await RyConfiguration.removeFromPinnedList(this.fullPath);
+			this._ownerQuickPick.onPinnedListChanged();
+		}
+		catch (err)
+		{
+			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWritePinnedList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating pinned list.`, err);
+		}
 	}
 
 	/**
@@ -622,37 +587,47 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 */
 	private async removeFromFavoriteList(): Promise<void>
 	{
-		await this.removeFromTheList(CONFIG_KEY_FAVORITE_LIST, i18n(MESSAGES.failedToWriteFavoriteList), `Error occurred while updating favorite list.`);
-		this._ownerQuickPick.onFavoriteListChanged();
-	}
-
-	private addMeToTheList(listKey: string, errorMessage: string, debugErrorMessage: string): void
-	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const pinList = config.get<string[]>(listKey) ?? [];
-
-		//
-		if (!pinList.includes(this.fullPath))
+		try
 		{
-			pinList.push(this.fullPath);
-			this.saveTheList(listKey, pinList, errorMessage, debugErrorMessage);
+			await RyConfiguration.removeFromFavoriteList(this.fullPath);
+			this._ownerQuickPick.onFavoriteListChanged();
+		}
+		catch (err)
+		{
+			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWriteFavoriteList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating favorite list.`, err);
 		}
 	}
 
 	/**
 	 * このファイル／ディレクトリをクイックアクセスにピン留めする。
 	 */
-	private addMeToPinnedList(): void
+	private async addMeToPinnedList(): Promise<void>
 	{
-		this.addMeToTheList(CONFIG_KEY_PIN_LIST, i18n(MESSAGES.failedToWritePinnedList), `Error occurred while updating pinned list.`);
+		try
+		{
+			await RyConfiguration.addToPinnedList(this.fullPath);
+			this._ownerQuickPick.onPinnedListChanged();
+		}
+		catch (err)
+		{
+			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWritePinnedList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating pinned list.`, err);
+		}
 	}
 
 	/**
 	 * このファイル／ディレクトリをお気に入りに登録する。
 	 */
-	private addToFavoriteList(): void
+	private async addToFavoriteList(): Promise<void>
 	{
-		this.addMeToTheList(CONFIG_KEY_FAVORITE_LIST, i18n(MESSAGES.failedToWriteFavoriteList), `Error occurred while updating favorite list.`);
+		try
+		{
+			await RyConfiguration.addToFavoriteList(this.fullPath);
+			this._ownerQuickPick.onFavoriteListChanged();
+		}
+		catch (err)
+		{
+			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWriteFavoriteList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating favorite list.`, err);
+		}
 	}
 
 	protected addPinAndFavoriteButton(): void
@@ -709,13 +684,9 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 */
 	protected setIcon(icon: string | undefined = 'folder'): void
 	{
-		if (icon.length > 0)
+		if (icon !== undefined && icon.length > 0)
 		{
-			// ディレクトリアイコンを表示する？
-			const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-			const showIcons = config.get<boolean>(CONFIG_KEY_SHOW_DIRECTORY_ICONS);
-
-			if (showIcons)
+			if (RyConfiguration.getShowDirectoryIcons())
 			{
 				this.iconPath = new vscode.ThemeIcon(icon);
 			}
@@ -725,9 +696,7 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	protected executeFileAction(): void
 	{
 		// 設定されているアクションを実行
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const defaultAction = config.get<string>(CONFIG_KEY_DEFAULT_ACTION);
-		switch (defaultAction)
+		switch (RyConfiguration.getDefaultAction())
 		{
 			case 'Open':
 				if (this.fullPath)

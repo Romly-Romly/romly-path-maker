@@ -1,12 +1,12 @@
 import * as path from 'path';
 
 import * as ryutils from './ryutils';
+import { RyConfiguration } from './ryConfiguration';
 import
 {
 	RyQuickPickBase,
 	RyQuickPickItem,
 	maskUserNameDirectory,
-	getBaseDirectoryFromConfig,
 	listFilesInDirectory,
 	RyPathQPItem,
 	MyFileInfo,
@@ -43,7 +43,7 @@ class InputPathModeQPItem extends RyPathQPItem
 		this.alwaysShow = true;
 
 		// このアイテムを選択したときに実際に挿入されるパス
-		const relativePath = getRelativeOrAbsolutePath(getBaseDirectoryFromConfig(), fileInfo.fullPath);
+		const relativePath = getRelativeOrAbsolutePath(RyConfiguration.getBaseDirectory(), fileInfo.fullPath);
 
 		// ディレクトリ名部分のみ
 		const dirName = fileInfo.filenameOnly();
@@ -169,7 +169,7 @@ export class InputPathQuickPick extends RyQuickPickBase
 		super();
 		this._backDirectory = backDirectory;
 		this._theQuickPick.title = i18n(MESSAGES['inputPathCommand.label']);
-		this._theQuickPick.placeholder = `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(getBaseDirectoryFromConfig())}`;
+		this._theQuickPick.placeholder = `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(RyConfiguration.getBaseDirectory())}`;
 		this._theQuickPick.onDidChangeValue(() => this.handleQuickPickDidChangeValue());
 		this.updateButtons();
 		this.updateItems();
@@ -213,7 +213,7 @@ export class InputPathQuickPick extends RyQuickPickBase
 
 		// 入力されたパスを解決する
 		const inputPath = this._theQuickPick.value;
-		const absolutePath = path.resolve(getBaseDirectoryFromConfig(), inputPath);
+		const absolutePath = path.resolve(RyConfiguration.getBaseDirectory(), inputPath);
 
 		const files = listFilesInDirectory(absolutePath);
 		if (files.result === FileListStatus.SUCCESS)

@@ -8,22 +8,10 @@ import * as path from 'path';
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
 
-import { CONFIGURATION_NAME } from './ryQuickPickBase';
-import { MyQuickPick, CONFIG_KEY_LAST_DIRECTORY, RyFavoriteQuickPick } from './myQuickPick';
+import { MyQuickPick, RyFavoriteQuickPick } from './myQuickPick';
 import { i18n } from './i18n';
 import { MESSAGES } from './i18nTexts';
-
-
-
-
-
-
-
-
-
-
-// 設定のキー名。package.json の configuration/properties 内のキー名と一致させる。
-const CONFIG_KEY_START_DIRECTORY = 'startDirectory';
+import { RyConfiguration } from './ryConfiguration';
 
 
 
@@ -95,8 +83,7 @@ function ensureAbsolutePath(inputPath: string): string
  */
 function getStartDirectory(): string
 {
-	const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-	const startDirectory = <string>config.get(CONFIG_KEY_START_DIRECTORY);
+	const startDirectory = RyConfiguration.getStartDirectory();
 
 	// 共通のフォールバックディレクトリ
 	const fallbackDir = os.homedir();
@@ -104,7 +91,7 @@ function getStartDirectory(): string
 	if (startDirectory === 'Last')
 	{
 		// 最後に表示したディレクトリを取得。取得した値は必ず絶対パスだと想定する。
-		const lastDirectory = ensureAbsolutePath(config.get<string>(CONFIG_KEY_LAST_DIRECTORY) ?? '');
+		const lastDirectory = ensureAbsolutePath(RyConfiguration.getLastDirectory());
 
 		// ディレクトリが存在するか確認
 		if (fs.existsSync(lastDirectory))
