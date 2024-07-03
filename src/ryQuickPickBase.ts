@@ -441,12 +441,12 @@ export abstract class RyQuickPickBase
 		});
 	}
 
-	protected getPathPresentation(): RyPathPresentation
+	public getPathPresentation(): RyPathPresentation
 	{
 		return RyConfiguration.getPathPresentation();
 	}
 
-	protected setPathPresentation(value: RyPathPresentation)
+	public setPathPresentation(value: RyPathPresentation)
 	{
 		RyConfiguration.setPathPresentation(value).then(() =>
 		{

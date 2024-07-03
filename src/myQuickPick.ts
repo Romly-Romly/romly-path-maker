@@ -102,10 +102,10 @@ export class MyQuickPick extends RyQuickPickBase
 	// 現在表示しているディレクトリ
 	private readonly _directory: string;
 
-	private constructor(files: ListFilesResult, directory: string)
+	private constructor(files: ListFilesResult)
 	{
 		super();
-		this._directory = directory;
+		this._directory = files.path;
 
 		this._theQuickPick.items = this.createQuickPickItems(files);
 		this._theQuickPick.title = maskUserNameDirectory(this._directory);
@@ -145,7 +145,7 @@ export class MyQuickPick extends RyQuickPickBase
 		// 最後に表示したディレクトリとして設定に保存しておく
 		RyConfiguration.setLastDirectory(directory).catch((error) => console.error(error));
 
-		return new MyQuickPick(files, directory);
+		return new MyQuickPick(files);
 	}
 
 	get fullPath(): string
@@ -412,43 +412,64 @@ export class MyQuickPick extends RyQuickPickBase
 			}
 		}
 
-		// ------------------------------------------------------------
-		// その他コマンドを追加
+		// このディレクトリへのアクションを追加
+		quickPickItems.push(...this.createActionsToDirectory());
 
-		quickPickItems.push({ label: i18n(MESSAGES.commands), kind: vscode.QuickPickItemKind.Separator });
+		// その他コマンドを追加
+		quickPickItems.push(...this.createCommands());
+
+		return quickPickItems;
+	}
+
+	private createActionsToDirectory(): vscode.QuickPickItem[]
+	{
+		const result: vscode.QuickPickItem[] = [];
+
+		result.push({ label: i18n(MESSAGES.actions), kind: vscode.QuickPickItemKind.Separator });
+		result.push(new RyOpenAsWorkspaceCommandQPItem(this));
+		result.push(new MyQuickPickRevealInExprolerItem(this));
+
+		return result;
+	}
+
+	private createCommands(): vscode.QuickPickItem[]
+	{
+		const baseDir = RyConfiguration.getBaseDirectory();
+		const result: vscode.QuickPickItem[] = [];
+
+		result.push({ label: i18n(MESSAGES.commands), kind: vscode.QuickPickItemKind.Separator });
 
 		// 基準ディレクトリを設定するコマンド。表示しているのが基準ディレクトリの場合は追加しない。
-		if (baseDir !== directory)
+		if (baseDir !== this.fullPath)
 		{
-			quickPickItems.push(new MyQuickPickSetBaseDirectoryItem(this, directory));
+			result.push(new MyQuickPickSetBaseDirectoryItem(this, this.fullPath));
 		}
 
 		// 基準ディレクトリをクリアするコマンド。すでに基準ディレクトリが空なら追加しない。
 		if (baseDir !== '')
 		{
-			quickPickItems.push(new MyQuickPickSetBaseDirectoryItem(this, ''));
+			result.push(new MyQuickPickSetBaseDirectoryItem(this, ''));
 		}
 
 		// パスを入力して移動するコマンド
-		quickPickItems.push(new RyInputPathCommandQPItem(this));
+		result.push(new RyInputPathCommandQPItem(this));
+
+		// 絶対パスと相対パスを切り替えるコマンド
+		result.push(new MyQuickPickTogglePathPresentationItem(this));
 
 		// 隠しファイルの表示を切り替えるコマンド
-		quickPickItems.push(new MyQuickPickToggleShowHiddenFilesItem(this));
+		result.push(new MyQuickPickToggleShowHiddenFilesItem(this));
 
 		// ワークスペース、編集中のファイル、ユーザーのディレクトリへそれぞれ移動するコマンド
-		this.addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoWorkspaceDir, ryutils.getWorkspaceDirectory());
+		this.addGotoDirectoryItem(result, this.fullPath, MESSAGES.gotoWorkspaceDir, ryutils.getWorkspaceDirectory());
 		const activeEditorDirectory = ryutils.getActiveEditorDirectory();
 		if (activeEditorDirectory)
 		{
-			this.addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoEditingFileDir, activeEditorDirectory);
+			this.addGotoDirectoryItem(result, this.fullPath, MESSAGES.gotoEditingFileDir, activeEditorDirectory);
 		}
-		this.addGotoDirectoryItem(quickPickItems, directory, MESSAGES.gotoUserDir, os.homedir());
+		this.addGotoDirectoryItem(result, this.fullPath, MESSAGES.gotoUserDir, os.homedir());
 
-		// その他コマンド
-		quickPickItems.push(new RyOpenAsWorkspaceCommandQPItem(this, directory));
-		quickPickItems.push(new MyQuickPickRevealInExprolerItem(this, directory));
-
-		return quickPickItems;
+		return result;
 	}
 
 	/**
@@ -609,6 +630,34 @@ class MyQuickPickToggleShowHiddenFilesItem extends RyQuickPickItem
 
 
 /**
+ * パス表示モードを切り替えるコマンドの QuickPickItem。
+ * 2024/07/04
+ */
+class MyQuickPickTogglePathPresentationItem extends RyQuickPickItem
+{
+	constructor(aQuickPick: MyQuickPick)
+	{
+		super(aQuickPick);
+		this.label = COMMAND_LABEL_PREFIX + i18n(MESSAGES[aQuickPick.getPathPresentation() === 'absolute' ? 'toRelativePathMode' : 'toAbsolutePathMode']);
+	}
+
+	override didAccept(): void
+	{
+		// パスの表示モードを切り替える
+		this.ownerQuickPick.setPathPresentation(this.ownerQuickPick.getPathPresentation() === 'absolute' ? 'relative' : 'absolute');
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
  * 「パスを入力して移動」コマンドの QuickPickItem。
  */
 class RyInputPathCommandQPItem extends RyQuickPickItem
@@ -644,12 +693,12 @@ class RyOpenAsWorkspaceCommandQPItem extends RyQuickPickItem
 {
 	private readonly _directory: string;
 
-	constructor(aQuickPick: MyQuickPick, aDirectory: string)
+	constructor(aQuickPick: MyQuickPick)
 	{
 		super(aQuickPick);
 		this.label = COMMAND_LABEL_PREFIX + i18n(MESSAGES.revealInExplorerCommandLabel, { app: 'VS Code' });
 		this.description = '';
-		this._directory = aDirectory;
+		this._directory = aQuickPick.fullPath;
 
 		this.buttons.push({ iconPath: new vscode.ThemeIcon('empty-window'), tooltip: i18n(MESSAGES.openDirectoryAsWorkspaceInNewWindow), id: '' });
 	}
@@ -686,12 +735,12 @@ class MyQuickPickRevealInExprolerItem extends RyQuickPickItem
 {
 	private _fullPath: string;
 
-	constructor(aQuickPick: MyQuickPick, fullPath: string)
+	constructor(aQuickPick: MyQuickPick)
 	{
 		super(aQuickPick);
 		this.label = COMMAND_LABEL_PREFIX + i18n(MESSAGES.revealInExplorerCommandLabel, { app: ryutils.getOsDependentExplorerAppName() });
 		this.description = '';
-		this._fullPath = fullPath;
+		this._fullPath = aQuickPick.fullPath;
 	}
 
 	override didAccept(): void

@@ -27,11 +27,23 @@ class ProjectMessages
 		ja: 'ファイルエクスプローラーを開く',
 		en: 'Reveal in File Explorer'
 	};
+
 	commands: I18NText =
 	{
 		ja: 'コマンド',
-		en: 'Commands'
+		en: 'Commands',
+		'zh-cn': '命令',
+		fr: 'Commandes',
 	};
+
+	actions: I18NText =
+	{
+		ja: 'アクション',
+		en: 'Actions',
+		'zh-cn': '操作',
+		fr: 'Actions',
+	};
+
 	'command.setBaseDirectory': I18NText =
 	{
 		ja: 'このディレクトリを基準ディレクトリとして設定する',
@@ -42,16 +54,19 @@ class ProjectMessages
 		ja: '基準ディレクトリをクリアする',
 		en: 'Clear base directory'
 	};
+
 	showHiddenFiles: I18NText =
 	{
 		ja: '隠しファイル（.で始まるファイル）を表示する',
 		en: 'Show hidden files (files starting with a dot)',
 	};
+
 	hideHiddenFiles: I18NText =
 	{
 		ja: '隠しファイル（.で始まるファイル）を隠す',
 		en: 'Hide hidden files (files starting with a dot)',
 	};
+
 	'tooltip.showHiddenFiles': I18NText =
 	{
 		ja: '隠しファイル（.で始まるファイル）を表示する。',
@@ -84,6 +99,18 @@ class ProjectMessages
 	{
 		ja: '相対パスで表示。',
 		en: 'Show relative paths.',
+	};
+
+	toAbsolutePathMode: I18NText =
+	{
+		ja: '絶対パスモードへ',
+		en: 'Absolute path mode',
+	};
+
+	toRelativePathMode: I18NText =
+	{
+		ja: '相対パスモードへ',
+		en: 'Relative path mode',
 	};
 
 	gotoWorkspaceDir: I18NText =
