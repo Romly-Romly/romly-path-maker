@@ -30,7 +30,7 @@
 			},
 			{
 				"command": "romly-path-maker.showFavorites",
-				"title": "Path Maker - Favorites",
+				"title": "%commandTitle.favorites%",
 				"category": "Romly"
 			}
 		],
@@ -114,6 +114,12 @@
 					"items": { "type": "string" },
 					"default": [],
 					"markdownDescription": "%favoriteList%"
+				},
+				"romly-path-maker.showRelativeRoute":
+				{
+					"type": "boolean",
+					"default": true,
+					"markdownDescription": "%showRelativeRoute%"
 				}
 			}
 		}

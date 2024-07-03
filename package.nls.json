@@ -1,4 +1,5 @@
 {
+	"commandTitle.favorites": "Path Maker - Favorites",
 	"baseDirectory": "**You don't have to set this. It's used internally.** When the base directory set, it will be stored in this value.",
 	"groupDirectories": "Display directories and files separately.",
 	"showDirectoryIcons": "Show directory icons.",
@@ -18,4 +19,5 @@
 	"hideUserName": "Mask the directory name of the user name in the pathes.",
 	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
 	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
+	"showRelativeRoute": "Displays directories in the path from the base directory (or root directory if not set)."
 }

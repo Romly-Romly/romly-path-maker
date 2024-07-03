@@ -16,6 +16,26 @@ import { i18n, COMMON_TEXTS } from "./i18n";
 
 
 /**
+ * パス文字列がパス区切り文字で終わっているか判定する。
+ * @param testPath
+ * @returns パス区切り文字で終わっていれば true
+ */
+export function endsWithPathSeparator(testPath: string): boolean
+{
+	const normalizedPath = path.normalize(testPath);
+	return normalizedPath.endsWith(path.sep);
+}
+
+
+
+
+
+
+
+
+
+
+/**
  * 文字列をクリップボードにコピーする。
  * @param text コピーする文字列。
  */
@@ -98,6 +118,31 @@ export function getOsDependentExplorerAppName(): string
 	}
 }
 
+
+
+
+
+
+
+
+
+
+/**
+ * 指定されたファイルをエディタで開く。
+ * @param fullPath 開くファイルのパス。
+ */
+export async function openFileInEdtor(fullPath: string)
+{
+	try
+	{
+		const document = await vscode.workspace.openTextDocument(fullPath);
+		await vscode.window.showTextDocument(document);
+	}
+	catch (error)
+	{
+		vscode.window.showErrorMessage(i18n(COMMON_TEXTS.couldNotOpenFile) + `: ${error}`);
+	}
+}
 
 
 

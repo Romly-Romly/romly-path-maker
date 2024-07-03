@@ -306,6 +306,14 @@ class COMMON_TEXTS_CLASS
 		ko: { other: '항목' }
 	};
 
+	couldNotOpenFile: I18NText =
+	{
+		ja: 'ファイルを開けませんでした',
+		en: 'Could not open file',
+		fr: "Impossible d'ouvrir le fichier",
+		"zh-cn": "无法打开文件"
+	};
+
 	showErrorDetailButtonCaption: I18NText =
 	{
 		ja: '詳細を表示',

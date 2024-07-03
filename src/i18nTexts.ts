@@ -87,21 +87,19 @@ class ProjectMessages
 		ja: 'ユーザーのディレクトリに移動',
 		en: 'Go to user directory',
 	};
-	backtoBaseDir: I18NText =
-	{
-		ja: '基準ディレクトリに戻る',
-		en: 'Back to base directory',
-	};
-	couldNotOpenFile: I18NText =
-	{
-		ja: 'ファイルを開けませんでした',
-		en: 'Could not open file',
-	};
+
 	baseDirectory: I18NText =
 	{
 		ja: '基準ディレクトリ',
 		en: 'Base Dir',
 	};
+
+	baseDirectoryUnset: I18NText =
+	{
+		ja: '未設定',
+		en: 'Unset',
+	};
+
 	baseDirectoryUpdated: I18NText =
 	{
 		ja: '基準ディレクトリを設定しました: {dir}',
@@ -217,6 +215,12 @@ class ProjectMessages
 	{
 		ja: 'お気に入りがありません。',
 		en: 'No favorite items.',
+	};
+
+	directoryTree: I18NText =
+	{
+		ja: 'ディレクトリツリー',
+		en: 'Directory tree',
 	};
 };
 

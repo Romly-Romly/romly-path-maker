@@ -8,7 +8,8 @@ import * as path from 'path';
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
 
-import { MyQuickPick, CONFIGURATION_NAME, CONFIG_KEY_LAST_DIRECTORY, RyFavoriteQuickPick } from './myQuickPick';
+import { CONFIGURATION_NAME } from './ryQuickPickBase';
+import { MyQuickPick, CONFIG_KEY_LAST_DIRECTORY, RyFavoriteQuickPick } from './myQuickPick';
 import { i18n } from './i18n';
 import { MESSAGES } from './i18nTexts';
 
@@ -62,6 +63,8 @@ function ensureAbsolutePath(inputPath: string): string
 	{
 		return process.cwd().split(path.sep)[0] + path.sep;
 	}
+
+	inputPath = path.normalize(inputPath);
 
 	// 絶対パスならそのまま返す。
 	if (path.isAbsolute(inputPath))
@@ -146,7 +149,8 @@ export function activate(context: vscode.ExtensionContext)
 	// commandId パラメータは package.json の command フィールドと一致する必要がある
 	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.show', () =>
 	{
-		MyQuickPick.createMyQuickPick(getStartDirectory());
+		const startDir = getStartDirectory();
+		MyQuickPick.createMyQuickPick(startDir);
 	}));
 
 	// お気に入り表示コマンド
