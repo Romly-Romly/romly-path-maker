@@ -8,10 +8,11 @@ import * as path from 'path';
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
 
-import { MyQuickPick, RyFavoriteQuickPick } from './myQuickPick';
-import { i18n } from './i18n';
+import { RyPath } from './ryQuickPickBase';
+import { MyQuickPick, RyCertainListQuickPick } from './myQuickPick';
+import { i18n, I18NText } from './i18n';
 import { MESSAGES } from './i18nTexts';
-import { RyConfiguration } from './ryConfiguration';
+import { RyConfiguration, RyListType } from './ryConfiguration';
 
 
 
@@ -131,28 +132,36 @@ function getStartDirectory(): string
 // コマンドが初めて実行されたときに拡張機能が有効化される
 export function activate(context: vscode.ExtensionContext)
 {
-	// コマンドは package.json ファイルで定義されている
-	// 次に、 registerCommand を使用してコマンドの実装を提供する
-	// commandId パラメータは package.json の command フィールドと一致する必要がある
-	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.show', () =>
+	function showList(listType: RyListType, noItemMsg: I18NText): void
 	{
-		const startDir = getStartDirectory();
-		MyQuickPick.createMyQuickPick(startDir);
-	}));
-
-	// お気に入り表示コマンド
-	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showFavorites', () =>
-	{
-		const quickPick = new RyFavoriteQuickPick();
-		if (quickPick.numFavorites > 0)
+		const quickPick = new RyCertainListQuickPick(listType);
+		if (quickPick.numItems > 0)
 		{
 			quickPick.show();
 		}
 		else
 		{
-			vscode.window.showInformationMessage(i18n(MESSAGES.noFavorites));
+			vscode.window.showInformationMessage(i18n(noItemMsg));
 		}
+	}
+
+	// コマンドは package.json ファイルで定義されている
+	// 次に、 registerCommand を使用してコマンドの実装を提供する
+	// commandId パラメータは package.json の command フィールドと一致する必要がある
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.show', () =>
+	{
+		const startPath = RyPath.createFromString(getStartDirectory());
+		const quickPick = new MyQuickPick(startPath);
+		quickPick.show();
 	}));
+
+	// お気に入り表示コマンド
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showFavorites', () =>
+		showList(RyListType.favorite, MESSAGES.noFavorites)));
+
+	// 履歴表示コマンド
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showHistory', () =>
+		showList(RyListType.history, MESSAGES.noHistory)));
 }
 
 // このメソッドは拡張機能が無効化されたときに呼び出される

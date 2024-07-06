@@ -19,6 +19,7 @@ const CONFIG_KEY_BASE_DIRECTORY = 'baseDirectory';
 const CONFIG_KEY_HIDE_USERNAME = 'hideUserName';
 const CONFIG_KEY_FAVORITE_LIST = 'favoriteList';
 const CONFIG_KEY_PIN_LIST = 'pinnedList';
+const CONFIG_KEY_RECENT_LIST = 'recentList';
 const CONFIG_KEY_SHOW_DIRECTORY_ICONS = 'showDirectoryIcons';
 const CONFIG_KEY_DEFAULT_ACTION = 'defaultAction';
 const CONFIG_KEY_SHOW_RELATIVE_ROUTE = 'showRelativeRoute';
@@ -36,7 +37,29 @@ const CONFIG_KEY_START_DIRECTORY = 'startDirectory';
 
 
 export type RyPathPresentation = 'absolute' | 'relative';
-export type RyDefaultAction = 'Open' | 'Copy' | 'Editor' | 'Terminal' | 'Reveal';
+export type RyDefaultAction = 'Menu' | 'Open' | 'Copy' | 'Editor' | 'Terminal' | 'Reveal';
+export type RyButtonName = 'Copy' | 'InsertToEditor' | 'InsertToTerminal' | 'OpenInEditor' | 'RevealInShell' | 'OpenAsWorkspace' | 'OpenAsWorkspaceInNewWindow' | 'Pin' | 'Favorite';
+
+// リストの種類
+// 都合上、文字列は設定のキーにしてある。
+export enum RyListType
+{
+	favorite = CONFIG_KEY_FAVORITE_LIST,
+	pinned = CONFIG_KEY_PIN_LIST,
+	history = CONFIG_KEY_RECENT_LIST
+};
+
+/**
+ * お気に入りやピン留めの各項目の形式。
+ * 2024/07/05
+ */
+export interface RyPathListItem
+{
+	path: string;
+
+	// 追加日。1970/1/1からのミリ秒数
+	added: number;
+}
 
 /**
  * 拡張機能の設定への読み書きをまとめたクラス。
@@ -142,86 +165,132 @@ export class RyConfiguration
 		return config.update(CONFIG_KEY_PATH_PRESENTATION, value, vscode.ConfigurationTarget.Global);
 	}
 
-	public static isPinned(path: string): boolean
+	public static isListed(listType: RyListType, path: string): boolean
 	{
-		return RyConfiguration.getPinnedList().some(listPath => listPath === path);
+		return RyConfiguration.getList(listType).some(item => item.path === path);
 	}
 
-	public static isFavorite(path: string): boolean
+	/**
+	 * 指定されたリストを読み込む。
+	 * @param list リストの種類を指定。
+	 * @returns
+	 */
+	public static getList(list: RyListType): RyPathListItem[]
 	{
-		return RyConfiguration.getFavoriteList().some(listPath => listPath === path);
-	}
+		const rawList = vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<any[]>(list);
 
-	public static getPinnedList(): string[]
-	{
-		return vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<string[]>(CONFIG_KEY_PIN_LIST) ?? [];
-	}
-
-	public static getFavoriteList(): string[]
-	{
-		return vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<string[]>(CONFIG_KEY_FAVORITE_LIST) ?? [];
-	}
-
-	private static addToList(listKey: string, path: string): Thenable<void>
-	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const list = config.get<string[]>(listKey) ?? [];
-
-		//
-		if (!list.includes(path))
+		// 配列になっていない
+		if (!Array.isArray(rawList))
 		{
-			list.push(path);
-			return RyConfiguration.saveList(listKey, list);
+			return [];
 		}
-		else
+
+		const validatedList: RyPathListItem[] = [];
+		for (const item of rawList)
 		{
-			return Promise.resolve();
+			if (item === null)
+			{
+				continue;
+			}
+
+			// 文字列の場合、パスとして追加。追加日は0とする。
+			if (typeof item === 'string')
+			{
+				validatedList.push({ path: item, added: 0 });
+				continue;
+			}
+
+			const { path, added } = item;
+			if (typeof path !== 'string')
+			{
+				// 正しい型になっていないものはスキップ
+				continue
+			}
+
+			let addedTimestamp;
+			if (typeof added === 'string')
+			{
+				addedTimestamp = Date.parse(added);
+				if (isNaN(addedTimestamp))
+				{
+					// 日付が無効
+					continue;
+				}
+			}
+			else if (typeof added === 'number')
+			{
+				addedTimestamp = added;
+			}
+			else
+			{
+				// added が stringでも number でもない
+				continue;
+			}
+
+			validatedList.push({ path, added: addedTimestamp });
 		}
+
+		return validatedList;
 	}
 
-	private static saveList(listKey: string, theList: string[]): Thenable<void>
+	private static saveList(listKey: string, theList: RyPathListItem[]): Thenable<void>
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		return config.update(listKey, theList, vscode.ConfigurationTarget.Global);
+
+		const saveList = theList.map(item => { return { path: item.path, added: new Date(item.added).toISOString() }});
+
+		return config.update(listKey, saveList, vscode.ConfigurationTarget.Global);
 	}
 
-	public static addToPinnedList(path: string): Thenable<void>
+	/**
+	 * 指定されたパスをリストに追加する。ただし既に追加されている場合は追加日を更新する。
+	 * @param path 追加するパス。
+	 * @param toList リストの種類を指定する。
+	 * @returns
+	 */
+	public static addToTheList(path: string, toList: RyListType): Thenable<void>
 	{
-		return RyConfiguration.addToList(CONFIG_KEY_PIN_LIST, path);
+		let list = RyConfiguration.getList(toList);
+
+		const currentTime = Date.now();
+		let updated = false;
+		list = list.map(item =>
+		{
+			// パスが一致する場合、addedを更新
+			if (item.path === path)
+			{
+				updated = true;
+				// ...でitemのプロパティ一通り追加できるらしい
+				return { ...item, added: currentTime };
+			}
+			// パスが一致しない場合、そのまま返す
+			return item;
+		});
+
+		if (!updated)
+		{
+			list.push({ path: path, added: currentTime });
+		}
+
+		return RyConfiguration.saveList(toList, list);
 	}
 
-	public static addToFavoriteList(path: string): Thenable<void>
+	public static removeFromList(list: RyListType, path: string): Thenable<void>
 	{
-		return RyConfiguration.addToList(CONFIG_KEY_FAVORITE_LIST, path);
-	}
-
-	private static removeFromList(listKey: string, path: string): Thenable<void>
-	{
-		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
-		const pinList = config.get<string[]>(listKey) ?? [];
+		const pinList = RyConfiguration.getList(list);
 
 		// 一致するもの全て削除
-		const newList = pinList.filter(listPath => listPath !== path);
+		const newList = pinList.filter(item => item.path !== path);
 
 		// 長さが変わっていれば書き込み
 		if (newList.length !== pinList.length)
 		{
-			return RyConfiguration.saveList(listKey, newList);
+			return RyConfiguration.saveList(list, newList);
 		}
 		else
 		{
 			return Promise.resolve();
 		}
-	}
-
-	public static removeFromPinnedList(path: string): Thenable<void>
-	{
-		return RyConfiguration.removeFromList(CONFIG_KEY_PIN_LIST, path);
-	}
-
-	public static removeFromFavoriteList(path: string): Thenable<void>
-	{
-		return RyConfiguration.removeFromList(CONFIG_KEY_FAVORITE_LIST, path);
 	}
 
 	/**
@@ -244,5 +313,17 @@ export class RyConfiguration
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 		return config.get<RyDefaultAction>(CONFIG_KEY_DEFAULT_ACTION) ?? 'Terminal';
+	}
+
+	/**
+	 * アイテムに表示する各ボタンの表示設定を取得する。
+	 * @param buttonName ボタン名を指定。
+	 * @returns true なら表示。
+	 */
+	public static getButtonVisibility(buttonName: RyButtonName): boolean
+	{
+		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+		const names = config.get<string[]>('itemButtonVisibility') || [];
+		return names.includes(buttonName);
 	}
 }

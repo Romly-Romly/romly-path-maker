@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import * as path from 'path';
 
 import * as ryutils from './ryutils';
@@ -7,14 +8,12 @@ import
 	RyQuickPickBase,
 	RyQuickPickItem,
 	maskUserNameDirectory,
-	listFilesInDirectory,
-	RyPathQPItem,
-	MyFileInfo,
+	RyPath,
+	RyValidPathQPItem,
 	FileListStatus,
-	getRelativeOrAbsolutePath,
 	MyFileType,
 } from './ryQuickPickBase';
-import { MyQuickPick } from './myQuickPick';
+import { MyQuickPick, RyCertainListQuickPick } from './myQuickPick';
 
 // 自前の国際化文字列リソースの読み込み
 import { i18n } from "./i18n";
@@ -30,57 +29,30 @@ import { MESSAGES } from "./i18nTexts";
 
 
 /**
- * CDモードで表示する、ファイルを表す QuickPickItem
+ * パス直接入力モードで表示する、ファイルを表す QuickPickItem
+ * alwaysShow が true で、選択した時の挙動がちょっと違う。
  */
-class InputPathModeQPItem extends RyPathQPItem
+class InputPathModeQPItem extends RyValidPathQPItem
 {
-	// ディレクトリなら true
-	isDirectory: boolean;
-
-	constructor(aQuickPick: RyQuickPickBase, fileInfo: MyFileInfo)
+	constructor(aQuickPick: RyQuickPickBase, fileInfo: RyPath)
 	{
-		super(aQuickPick, fileInfo.fullPath, fileInfo.fullPath);
+		super(aQuickPick, fileInfo);
 		this.alwaysShow = true;
-
-		// このアイテムを選択したときに実際に挿入されるパス
-		const relativePath = getRelativeOrAbsolutePath(RyConfiguration.getBaseDirectory(), fileInfo.fullPath);
-
-		// ディレクトリ名部分のみ
-		const dirName = fileInfo.filenameOnly();
-
-		// このアイテムを選択したときに実際に挿入される文字列
-		const insertPath = `'${relativePath}'`;
-
-		// ラベルは入力中のパスにマッチするようにマスクしない
-		this.description = insertPath === dirName ? '' : maskUserNameDirectory(insertPath);
-
-		this.insertPath = insertPath;
-		this.isDirectory = fileInfo.type === MyFileType.directory;
-
-		this.addPinAndFavoriteButton();
-		this.addCopyButton();
-		this.addInsertPathToTerminalButton();
-
-		if (fileInfo.type === MyFileType.directory)
-		{
-			this.addRevealInFileExplorerButton();
-			this.setIcon();
-		}
-		else
-		{
-			this.addOpenInEditorButton();
-		}
 	}
 
 	override didAccept(): void
 	{
 		// ディレクトリを選択したらそのディレクトリで通常モードに戻る
-		if (this.isDirectory)
+		if (this._path.type === MyFileType.directory)
 		{
 			this.ownerQuickPick.dispose();
 
 			// 新しい QuickPick を表示する
-			MyQuickPick.createMyQuickPick(this.fullPath);
+			const quickPick = new MyQuickPick(this.path);
+			if (quickPick.path.isValidPath)
+			{
+				quickPick.show();
+			}
 		}
 		else
 		{
@@ -101,16 +73,16 @@ class InputPathModeQPItem extends RyPathQPItem
 
 
 /**
- * ディレクトリが見付からなかった事を示す QuickPickItem
+ * ディレクトリが見付からなかったかエラーだった事を示す QuickPickItem
  * 2024/07/01
  */
-class RyDirectoryNotFoundQPItem extends RyQuickPickItem
+class RyDirectoryErrorQPItem extends RyQuickPickItem
 {
-	constructor(aQuickPick: InputPathQuickPick, dir: string)
+	constructor(aQuickPick: InputPathQuickPick, dir: RyPath)
 	{
 		super(aQuickPick);
-		this.label = i18n(MESSAGES.directoryNotFoundItemLabel);
-		this.detail = dir;
+		this.label = dir.type === MyFileType.notFound ? i18n(MESSAGES.directoryNotFoundItemLabel) : i18n(MESSAGES.directoryErrorItemLabel);
+		this.detail = dir.fullPath;
 		this.alwaysShow = true;
 	}
 }
@@ -130,20 +102,25 @@ class RyDirectoryNotFoundQPItem extends RyQuickPickItem
  */
 class RyBackToBrowseModeQPItem extends RyQuickPickItem
 {
-	private readonly _backDirectory: string;
+	private readonly _backDirectory: RyPath;
 
-	constructor(aQuickPick: InputPathQuickPick, backDir: string)
+	constructor(aQuickPick: InputPathQuickPick, backPath: RyPath)
 	{
 		super(aQuickPick);
-		this._backDirectory = backDir;
-		this.label = i18n(MESSAGES.backToBrowseModeItemLabel, { dir: path.basename(backDir) });
+		this._backDirectory = backPath;
+		this.label = i18n(MESSAGES.backToBrowseModeItemLabel, { dir: backPath.filenameOnly });
 		this.alwaysShow = true;
 	}
 
 	override didAccept(): void
 	{
 		this.ownerQuickPick.dispose();
-		MyQuickPick.createMyQuickPick(this._backDirectory);
+
+		const quickPick = new MyQuickPick(this._backDirectory);
+		if (quickPick.path.isValidPath)
+		{
+			quickPick.show();
+		}
 	}
 }
 
@@ -162,17 +139,15 @@ class RyBackToBrowseModeQPItem extends RyQuickPickItem
 export class InputPathQuickPick extends RyQuickPickBase
 {
 	// パス直接入力モードの前に表示されていたディレクトリ。ブラウズモードに戻る時に使う。
-	private _backDirectory: string;
+	private _backDirectory: RyPath;
 
-	constructor(backDirectory: string)
+	constructor(backDirectory: RyPath)
 	{
 		super();
 		this._backDirectory = backDirectory;
 		this._theQuickPick.title = i18n(MESSAGES['inputPathCommand.label']);
-		this._theQuickPick.placeholder = `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(RyConfiguration.getBaseDirectory())}`;
 		this._theQuickPick.onDidChangeValue(() => this.handleQuickPickDidChangeValue());
-		this.updateButtons();
-		this.updateItems();
+		this.updateList();
 		this._theQuickPick.show();
 	}
 
@@ -188,17 +163,19 @@ export class InputPathQuickPick extends RyQuickPickBase
 		{
 			this.updateItems();
 		}
-
-		this.updateButtons();
 	}
 
-	/**
-	 * QuickPick のボタンの更新。生成時と、表示設定が変わった時などに必要。
-	 */
-	private updateButtons(): void
+	protected override get placeholderText(): string
 	{
-		this._theQuickPick.buttons =
-		[
+		return `${i18n(MESSAGES.baseDirectory)}: ${maskUserNameDirectory(RyConfiguration.getBaseDirectory())}`;
+	}
+
+	protected override getButtons(): vscode.QuickInputButton[]
+	{
+		return [
+			// ディレクトリとファイルを分けて表示する設定の切り替えボタン
+			this.createToggleGroupDirectoriesButton(),
+
 			// 隠しファイルの表示設定ボタン
 			this.createShowHiddenFilesButton()
 		];
@@ -207,40 +184,40 @@ export class InputPathQuickPick extends RyQuickPickBase
 	/**
 	 * 表示するアイテムのリストを作成する。
 	 */
-	private updateItems(): void
+	protected override updateItems(): void
 	{
-		const items: RyQuickPickItem[] = [];
+		const items: vscode.QuickPickItem[] = [];
 
 		// 入力されたパスを解決する
 		const inputPath = this._theQuickPick.value;
 		const absolutePath = path.resolve(RyConfiguration.getBaseDirectory(), inputPath);
+		const ryPath = RyPath.createFromString(absolutePath);
 
-		const files = listFilesInDirectory(absolutePath);
+		const files = ryPath.listFiles();
 		if (files.result === FileListStatus.SUCCESS)
 		{
-			items.push(...files.files.map(fileInfo => new InputPathModeQPItem(this, fileInfo)));
+			const pathItems = files.files.map(fileInfo => new InputPathModeQPItem(this, fileInfo));
+			items.push(...RyCertainListQuickPick.separatePathItemsIfNeeded(pathItems));
 		}
-		else if (files.result === FileListStatus.NOT_FOUND)
+		else if (files.result === FileListStatus.ERROR)
 		{
-			items.push(new RyDirectoryNotFoundQPItem(this, absolutePath));
+			items.push(new RyDirectoryErrorQPItem(this, files.path));
 		}
 
 		items.push(new RyBackToBrowseModeQPItem(this, this._backDirectory));
 		this._theQuickPick.items = items;
 	}
 
-	public override updateList(): void
+	public override showDirectory(directory: RyPath): void
 	{
-		this.updateItems();
-		this.updateButtons();
+		const quickPick = new MyQuickPick(directory);
+		if (quickPick.path.isValidPath)
+		{
+			quickPick.show();
+		}
 	}
 
-	public override showDirectory(directory: string): void
-	{
-		MyQuickPick.createMyQuickPick(directory);
-	}
-
-	public static createQuickPick(backDirectory: string): InputPathQuickPick
+	public static createQuickPick(backDirectory: RyPath): InputPathQuickPick
 	{
 		return new InputPathQuickPick(backDirectory);
 	}

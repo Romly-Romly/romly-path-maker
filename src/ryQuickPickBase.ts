@@ -3,12 +3,12 @@ import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
 
-import * as ryutils from './ryutils';
-import { RyConfiguration, RyPathPresentation } from './ryConfiguration';
-
 // 自前の国際化文字列リソースの読み込み
 import { i18n } from "./i18n";
 import { MESSAGES } from "./i18nTexts";
+
+import * as ryutils from './ryutils';
+import { RyConfiguration, RyPathPresentation, RyListType } from './ryConfiguration';
 
 
 
@@ -20,6 +20,9 @@ import { MESSAGES } from "./i18nTexts";
 
 
 export const EXTENSION_NAME_FOR_ERROR = 'Romly: Path-Maker';
+
+// コマンドのラベルに付く前置詞
+export const COMMAND_LABEL_PREFIX = '> ';
 
 
 
@@ -75,7 +78,7 @@ export function maskUserNameDirectory(pathString: string): string
  * @param fullPath 変換するパス
  * @returns 相対パスまたは絶対パス
  */
-export function getRelativeOrAbsolutePath(baseDir: string, fullPath: string): string
+function getRelativeOrAbsolutePath(baseDir: string, fullPath: string): string
 {
 	if (!baseDir || baseDir.trim() === '')
 	{
@@ -100,27 +103,6 @@ export function getRelativeOrAbsolutePath(baseDir: string, fullPath: string): st
 
 export enum MyFileType { file, directory, notFound, error };
 
-export class MyFileInfo
-{
-	fullPath: string;
-	type: MyFileType;
-
-	constructor(fullPath: string, type: MyFileType)
-	{
-		this.fullPath = fullPath;
-		this.type = type;
-	}
-
-	filenameOnly(): string
-	{
-		return path.basename(this.fullPath);
-	}
-
-	get isHiddenFile(): boolean
-	{
-		return path.basename(this.fullPath).startsWith('.');
-	}
-}
 
 
 
@@ -130,66 +112,7 @@ export class MyFileInfo
 
 
 
-
-/**
- * ファイルのパスから MyFileInfo を作成する。ファイル情報を取得したりファイルかディレクトリかを調べたりする。
- * @param fullPath ファイル／ディレクトリのフルパス。
- * @param undefinedIfError true の場合、パスが存在しなかったり情報が取得できなかった場合に undefined を返す。
- * @returns MyFileInfo。undefinedIfError が true かつ、パスが見付からなかったり情報が取得できなかった場合は undefined
- */
-export function filePathToFileInfo<T extends boolean>(fullPath: string, undefinedIfError: T = true as T): T extends true ? MyFileInfo | undefined : MyFileInfo
-{
-	// 見付からないファイルは省く
-	if (!fs.existsSync(fullPath))
-	{
-		// 返り値の型を変えるという特殊なことをやってるので、コンパイラを黙らせるために any にキャストしないといけない。他のreturnのとこも同じ。
-		return (undefinedIfError ? undefined : new MyFileInfo(fullPath, MyFileType.notFound)) as any;
-	}
-
-	// ファイル情報が取得できなかったもの（エラー発生）は省く
-	try
-	{
-		const stat = fs.statSync(fullPath);
-		return (new MyFileInfo(fullPath, stat.isDirectory() ? MyFileType.directory : MyFileType.file)) as any;
-	}
-	catch (err)
-	{
-		console.error(`Romly Path Maker: statSync failed for: ${fullPath}`, err);
-		return (undefinedIfError ? undefined : new MyFileInfo(fullPath, MyFileType.error)) as any;
-	}
-}
-
-
-
-
-
-
-
-
-
-
-export function filePathListToFileInfoList(filePathList: string[]): MyFileInfo[]
-{
-	const result: MyFileInfo[] = [];
-	filePathList.forEach(listPath =>
-	{
-		// エラーになったファイルもMyFileInfoとして追加される。
-		const info = filePathToFileInfo(listPath, false);
-		if (info)
-		{
-			result.push(info);
-		}
-	});
-	return result;
-}
-
-
-
-
-
-
-
-export enum FileListStatus { SUCCESS, NOT_FOUND, ERROR };
+export enum FileListStatus { SUCCESS, ERROR };
 
 /**
  * listFilesInDirectory の結果を表すオブジェクト。
@@ -197,73 +120,17 @@ export enum FileListStatus { SUCCESS, NOT_FOUND, ERROR };
 export class ListFilesResult
 {
 	result: FileListStatus;
-	path: string;
-	files: MyFileInfo[];
+	path: RyPath;
+	files: RyPath[];
 	error?: Error;
 
-	constructor(result: FileListStatus, path: string, files: MyFileInfo[] = [], error: Error | undefined = undefined)
+	constructor(result: FileListStatus, path: RyPath, files: RyPath[] = [], error: Error | undefined = undefined)
 	{
 		this.result = result;
 		this.path = path;
 		this.files = files;
 		this.error = error;
 	}
-}
-
-
-
-
-
-
-
-
-
-
-/**
- * 指定されたディレクトリ内のファイル一覧を MyFileInfo のリストとして取得する。
- *
- * @param directory ファイル一覧を取得したいディレクトリのパス
- * @returns ファイル取得の成否、ファイル情報の配列、エラー情報（ある場合）を含むオブジェクト。
- */
-export function listFilesInDirectory(directory: string): ListFilesResult
-{
-	const filterHiddenFiles = !RyConfiguration.getShowHiddenFiles();
-
-	// ディレクトリの存在チェック
-	if (!fs.existsSync(directory))
-	{
-		return new ListFilesResult(FileListStatus.NOT_FOUND, directory);
-	}
-
-	const result = [] as MyFileInfo[];
-	let files;
-	try
-	{
-		files = fs.readdirSync(directory);
-
-		// 文中で return する必要があるので forEach ではなく for ループで。
-		for (const filename of files)
-		{
-			const fullPath = path.join(directory, filename);
-
-			// ファイル情報が取得できなかったもの（エラー発生）は省く
-			const info = filePathToFileInfo(fullPath, true);
-			if (info !== undefined)
-			{
-				// 隠しファイルの表示設定に応じて省く
-				if (!filterHiddenFiles || !info.isHiddenFile)
-				{
-					result.push(info);
-				}
-			}
-		}
-	}
-	catch (err)
-	{
-		return new ListFilesResult(FileListStatus.ERROR, directory, [], err as Error);
-	}
-
-	return new ListFilesResult(FileListStatus.SUCCESS, directory, result);
 }
 
 
@@ -368,25 +235,20 @@ export abstract class RyQuickPickBase
 	}
 
 	/**
-	 * MyFileInfo[] を RyPathQPItem[] に変換する。
+	 * RyPath[] を RyPathQPItem[] に変換する。
 	 * @param infos
-	 * @param baseDirectory 基準ディレクトリを指定。
 	 * @returns
 	 */
-	protected convertFileInfosToPathQPItems(infos: MyFileInfo[], baseDirectory: string, callback: (item: RyPathQPItem, index: number) => void = () => null): RyPathQPItem[]
+	protected convertFileInfosToPathQPItems(infos: RyPath[], callback: (item: RyPathQPItem, index: number) => void = () => null): RyPathQPItem[]
 	{
 		const items: RyPathQPItem[] = [];
 
 		infos.forEach((fileInfo, index) =>
 		{
 			let item: RyPathQPItem;
-			if (fileInfo.type === MyFileType.directory)
+			if (fileInfo.isValidPath)
 			{
-				item = new RyDirectoryQPItem(this, fileInfo, false, baseDirectory);
-			}
-			else if (fileInfo.type === MyFileType.file)
-			{
-				item = new RyFileQPItem(this, fileInfo, baseDirectory);
+				item = new RyValidPathQPItem(this, fileInfo);
 			}
 			else
 			{
@@ -400,18 +262,14 @@ export abstract class RyQuickPickBase
 	}
 
 	/**
-	 * お気に入りリストの変更時に呼ばれる。
+	 * お気に入り／クイックアクセスのリスト変更時に呼ばれる。
 	 * 必要な処理があれば継承先で実装。
 	 */
-	public onFavoriteListChanged(): void
+	public onListChanged(listType: RyListType): void
 	{
 	}
 
-	public onPinnedListChanged(): void
-	{
-	}
-
-	public showDirectory(directory: string): void
+	public showDirectory(directory: RyPath): void
 	{
 	}
 
@@ -425,7 +283,27 @@ export abstract class RyQuickPickBase
 		this._theQuickPick.dispose();
 	}
 
-	public abstract updateList(): void;
+	protected get placeholderText(): string
+	{
+		return '';
+	}
+
+	protected abstract updateItems(): void;
+
+	protected getButtons(): vscode.QuickInputButton[]
+	{
+		return [];
+	}
+
+	/**
+	 * readonly プロパティを使って擬似的に final メソッドにしてる。
+	 */
+	public readonly updateList = () =>
+	{
+		this._theQuickPick.placeholder = this.placeholderText;
+		this.updateItems();
+		this._theQuickPick.buttons = this.getButtons();
+	}
 
 	get showHiddenFiles(): boolean
 	{
@@ -453,6 +331,40 @@ export abstract class RyQuickPickBase
 			// 設定の変更に伴うQuickPick自体の更新
 			this.updateList();
 		});
+	}
+
+	protected stringPathListToPathItemList(stringPaths: string[], forceShowHiddenFiles: boolean, callback: (item: RyPathQPItem, index: number) => void = () => null): RyPathQPItem[]
+	{
+		const showHiddenFiles = RyConfiguration.getShowHiddenFiles();
+
+		const paths: RyPath[] = [];
+		stringPaths.forEach(listPath =>
+		{
+			// 隠しファイルのスキップ
+			if (forceShowHiddenFiles || showHiddenFiles || !path.basename(listPath).startsWith('.'))
+			{
+				// エラーになったファイルも RyPath として追加される。
+				paths.push(RyPath.createFromString(listPath));
+			}
+		});
+
+		const items: RyPathQPItem[] = [];
+		paths.forEach((fileInfo, index) =>
+		{
+			let item: RyPathQPItem;
+			if (fileInfo.isValidPath)
+			{
+				item = new RyValidPathQPItem(this, fileInfo);
+			}
+			else
+			{
+				item = new RyErrorPathQPItem(this, fileInfo);
+			}
+			items.push(item);
+			callback(item, index);
+		});
+
+		return items;
 	}
 }
 
@@ -513,23 +425,296 @@ export abstract class RyQuickPickItem implements vscode.QuickPickItem
 
 
 
+export class RyPath
+{
+	// このオブジェクトが示すパス。初期化時に `path.normalize` してある。
+	readonly _fullPath: string;
+
+	readonly _type: MyFileType;
+
+	constructor(aPath: string, type: MyFileType)
+	{
+		this._fullPath = aPath;
+		this._type = type;
+	}
+
+	/**
+	 * ファイルのパスから RyPath を作成する。ファイル情報を取得したりファイルかディレクトリかを調べたりする。
+	 * @param fullPath ファイル／ディレクトリのフルパス。
+	 * @returns RyPath 。 undefinedIfError が true かつ、パスが見付からなかったり情報が取得できなかった場合は undefined
+	 */
+	static createFromString(fullPath: string): RyPath
+	{
+		// ファイルが見付からない
+		if (!fs.existsSync(fullPath))
+		{
+			return new RyPath(fullPath, MyFileType.notFound);
+		}
+
+		try
+		{
+			const stat = fs.statSync(fullPath);
+			return new RyPath(fullPath, stat.isDirectory() ? MyFileType.directory : MyFileType.file);
+		}
+		catch (err)
+		{
+			// ファイル情報が取得できなかった
+			console.error(`Romly Path Maker: statSync failed for: ${fullPath}`, err);
+			return new RyPath(fullPath, MyFileType.error);
+		}
+	}
+
+	public get fullPath(): string
+	{
+		return this._fullPath;
+	}
+
+	public get type(): MyFileType
+	{
+		return this._type;
+	}
+
+	public get isDirectory(): boolean
+	{
+		return this._type === MyFileType.directory;
+	}
+
+	public get filenameOnly(): string
+	{
+		return path.basename(this.fullPath);
+	}
+
+	public get isHiddenFile(): boolean
+	{
+		return path.basename(this.fullPath).startsWith('.');
+	}
+
+	public get parentPath(): RyPath
+	{
+		return RyPath.createFromString(path.dirname(this.fullPath));
+	}
+
+	public get isValidPath(): boolean
+	{
+		return !(this._type === MyFileType.notFound || this._type === MyFileType.error);
+	}
+
+	/**
+	 * このパスから実際に挿入される文字列。
+	 */
+	public get insertPath(): string
+	{
+		if (RyConfiguration.getPathPresentation() === 'relative')
+		{
+			const baseDir = RyConfiguration.getBaseDirectory();
+			const relativePath = getRelativeOrAbsolutePath(baseDir, this._fullPath);
+
+			return `'${relativePath}'`;
+		}
+		else
+		{
+			return `'${this._fullPath}'`;
+		}
+	}
+
+	public copyToClipboard(): void
+	{
+		ryutils.copyTextToClipboard(this.insertPath);
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	public insertToEditor(): void
+	{
+		ryutils.insertTextToEdtior(this.insertPath);
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	public insertToTerminal(): void
+	{
+		ryutils.sendTextToTerminal(this.insertPath);
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	public openDirectory(): void
+	{
+		// ディレクトリを開く
+		// if (isDirectory)
+		// {
+		// 	ryutils.openDirectory(path.dirname(this._fullPath));
+		// }
+		// else
+		// {
+			ryutils.openDirectory(this._fullPath);
+//		}
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	public openInEditor(): void
+	{
+		ryutils.openFileInEdtor(this.fullPath);
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	/**
+	 * このディレクトリをVS Codeで開く。
+	 * @param newWindow 新しいウィンドウで開く場合は true を指定。
+	 */
+	public openAsWorkspace(newWindow: boolean): void
+	{
+		vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(this.fullPath), newWindow);
+
+		// 履歴に追加
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+	}
+
+	/**
+	 * このファイル／ディレクトリがクイックアクセスにピン留めされていれば true
+	 */
+	public isListed(listType: RyListType): boolean
+	{
+		return RyConfiguration.isListed(listType, this.fullPath);
+	}
+
+	/**
+	 * このファイル／ディレクトリをクイックアクセスにピン留めする。
+	 */
+	public async addToTheList(list: RyListType, callback: () => void): Promise<void>
+	{
+		try
+		{
+			await RyConfiguration.addToTheList(this.fullPath, list);
+			callback();
+		}
+		catch (err)
+		{
+			const msg = i18n(list === RyListType.pinned ? MESSAGES.failedToWritePinnedList : MESSAGES.failedToWriteFavoriteList);
+			const errorMsg = list === RyListType.pinned ? `Error occurred while updating pinned list.` : `Error occurred while updating favorite list.`;
+			ryutils.showErrorMessageWithDetailChannel(msg, EXTENSION_NAME_FOR_ERROR, errorMsg, err);
+		}
+	}
+
+	/**
+	 * このファイル／ディレクトリをクイックアクセスから取り除く。
+	 */
+	public async removeFromTheList(listType: RyListType, callback: () => void): Promise<void>
+	{
+		try
+		{
+			await RyConfiguration.removeFromList(listType, this.fullPath);
+			callback();
+		}
+		catch (err)
+		{
+			const msg = i18n(listType === RyListType.pinned ? MESSAGES.failedToWritePinnedList : MESSAGES.failedToWriteFavoriteList);
+			const errorMsg = listType === RyListType.pinned ? `Error occurred while updating pinned list.` : `Error occurred while updating favorite list.`;
+			ryutils.showErrorMessageWithDetailChannel(msg, EXTENSION_NAME_FOR_ERROR, errorMsg, err);
+		}
+	}
+
+	/**
+	 * このパスが指定されたパスと同じファイル／ディレクトリを示すものであれば true
+	 * @param other
+	 * @returns
+	 */
+	public equals(other: RyPath): boolean
+	{
+		// コンストラクタで normalize してるハズなので単純に比較。
+		let path1 = this._fullPath;
+		let path2 = other.fullPath;
+		const isWindows = os.platform() === 'win32';
+		if (isWindows)
+		{
+			path1 = path1.toLowerCase();
+			path2 = path2.toLowerCase();
+		}
+		return path1 === path2;
+	}
+
+	/**
+	 * ディレクトリ内のファイル一覧を取得する。
+	 * @returns ファイル取得の成否、ファイル情報の配列、エラー情報（ある場合）を含むオブジェクト。
+	 */
+	public listFiles(): ListFilesResult
+	{
+		const filterHiddenFiles = !RyConfiguration.getShowHiddenFiles();
+
+		// ディレクトリの存在チェック
+		if (!this.isValidPath)
+		{
+			return new ListFilesResult(FileListStatus.ERROR, this);
+		}
+
+		const result = [] as RyPath[];
+		let files;
+		try
+		{
+			files = fs.readdirSync(this.fullPath);
+
+			// 文中で return する必要があるので forEach ではなく for ループで。
+			for (const filename of files)
+			{
+				const fullPath = path.join(this.fullPath, filename);
+
+				// ファイル情報が取得できなかったもの（エラー発生）は省く
+				const info = RyPath.createFromString(fullPath);
+				if (info.isValidPath)
+				{
+					// 隠しファイルの表示設定に応じて省く
+					if (!filterHiddenFiles || !info.isHiddenFile)
+					{
+						result.push(info);
+					}
+				}
+			}
+		}
+		catch (err)
+		{
+			return new ListFilesResult(FileListStatus.ERROR, this, [], err as Error);
+		}
+
+		return new ListFilesResult(FileListStatus.SUCCESS, this, result);
+	}
+}
+
+
+
+
+
+
+
+
+
+
 /**
  * ファイルまたはディレクトリを示す QuickPickItem の継承元。
- * この時点で「お気に入りに登録」「ピン留め」ボタンがあるよ。
  */
 export abstract class RyPathQPItem extends RyQuickPickItem
 {
 	// ボタン識別用の定数
-	private readonly BUTTON_ID_COPY = 'copy';
-	private readonly BUTTON_ID_INSERT_PATH_TO_EDITOR = 'insert_path_to_editor';
-	private readonly BUTTON_ID_INSERT_PATH_TO_TERMINAL = 'insert_path_to_terminal';
-	private readonly BUTTON_ID_OPEN_IN_EDITOR = 'open_in_editor';
-	private readonly BUTTON_ID_REVEAL_IN_FILE_EXPLORER = 'reveal_in_file_explorer';
-	private readonly BUTTON_ID_PIN = 'pin';
-	private readonly BUTTON_ID_FAVORITE = 'favorite';
+	static ButtonId =
+	{
+		copy: 'copy',
+		insertPathToEditor: 'insertPathToEditor',
+		insertPathToTerminal: 'insertPathToTerminal',
+		openInEditor: 'openInEditor',
+		revealInFileExplorer: 'revealInFileExplorer',
+		openAsWorkspace: 'openAsWorkspace',
+		openAsWorkspaceInNewWindow: 'openAsWorkspaceInNewWindow',
+		pin: 'pin',
+		favorite: 'favorite'
+	} as const;
 
-	fullPath: string;
-	insertPath: string;
+	protected readonly _path: RyPath;
 
 	iconPath?: vscode.Uri | {
 		light: vscode.Uri;
@@ -539,143 +724,83 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	// インデントを含まないラベル。インデント設定用に保持しておく。
 	private _label: string;
 
-	constructor(aQuickPick: RyQuickPickBase, aPath: string, aLabel: string)
+	constructor(aQuickPick: RyQuickPickBase, aPath: RyPath, aLabel: string)
 	{
 		super(aQuickPick);
 		this._label = aLabel;
-		this.fullPath = path.normalize(aPath);
-		this.insertPath = '';
+		this._path = aPath;
 
 		// 初期インデントはゼロ（インデント無し）
 		this.indent = 0;
 	}
 
-	/**
-	 * このファイル／ディレクトリがクイックアクセスにピン留めされていれば true
-	 */
-	private get amIPinned(): boolean
-	{
-		return RyConfiguration.isPinned(this.fullPath);
-	}
-
-	/**
-	 * このファイル／ディレクトリがお気に入りに登録されていれば true
-	 */
-	private get amIFavorite(): boolean
-	{
-		return RyConfiguration.isFavorite(this.fullPath);
-	}
-
-	/**
-	 * このファイル／ディレクトリをクイックアクセスから取り除く。
-	 */
-	private async purgeMeFromPinnedList(): Promise<void>
-	{
-		try
-		{
-			await RyConfiguration.removeFromPinnedList(this.fullPath);
-			this._ownerQuickPick.onPinnedListChanged();
-		}
-		catch (err)
-		{
-			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWritePinnedList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating pinned list.`, err);
-		}
-	}
-
-	/**
-	 * このファイル／ディレクトリをお気に入りから取り除く。
-	 */
-	private async removeFromFavoriteList(): Promise<void>
-	{
-		try
-		{
-			await RyConfiguration.removeFromFavoriteList(this.fullPath);
-			this._ownerQuickPick.onFavoriteListChanged();
-		}
-		catch (err)
-		{
-			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWriteFavoriteList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating favorite list.`, err);
-		}
-	}
-
-	/**
-	 * このファイル／ディレクトリをクイックアクセスにピン留めする。
-	 */
-	private async addMeToPinnedList(): Promise<void>
-	{
-		try
-		{
-			await RyConfiguration.addToPinnedList(this.fullPath);
-			this._ownerQuickPick.onPinnedListChanged();
-		}
-		catch (err)
-		{
-			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWritePinnedList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating pinned list.`, err);
-		}
-	}
-
-	/**
-	 * このファイル／ディレクトリをお気に入りに登録する。
-	 */
-	private async addToFavoriteList(): Promise<void>
-	{
-		try
-		{
-			await RyConfiguration.addToFavoriteList(this.fullPath);
-			this._ownerQuickPick.onFavoriteListChanged();
-		}
-		catch (err)
-		{
-			ryutils.showErrorMessageWithDetailChannel(i18n(MESSAGES.failedToWriteFavoriteList), EXTENSION_NAME_FOR_ERROR, `Error occurred while updating favorite list.`, err);
-		}
-	}
-
 	protected addPinAndFavoriteButton(): void
 	{
 		// ピン留めボタン
-		if (this.amIPinned)
+		if (RyConfiguration.getButtonVisibility('Pin'))
 		{
-			this.buttons.push({ iconPath: new vscode.ThemeIcon('pinned'), tooltip: i18n(MESSAGES.unpinThis), id: this.BUTTON_ID_PIN });
-		}
-		else
-		{
-			this.buttons.push({ iconPath: new vscode.ThemeIcon('pin'), tooltip: i18n(MESSAGES.pinThis), id: this.BUTTON_ID_PIN });
+			if (this._path.isListed(RyListType.pinned))
+			{
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('pinned'), tooltip: i18n(MESSAGES.unpinThis), id: RyPathQPItem.ButtonId.pin });
+			}
+			else
+			{
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('pin'), tooltip: i18n(MESSAGES.pinThis), id: RyPathQPItem.ButtonId.pin });
+			}
 		}
 
 		// お気に入りボタン
-		if (this.amIFavorite)
+		if (RyConfiguration.getButtonVisibility('Favorite'))
 		{
-			this.buttons.push({ iconPath: new vscode.ThemeIcon('star-full'), tooltip: i18n(MESSAGES.removeFromFavorite), id: this.BUTTON_ID_FAVORITE });
-		}
-		else
-		{
-			this.buttons.push({ iconPath: new vscode.ThemeIcon('star'), tooltip: i18n(MESSAGES.addToFavorite), id: this.BUTTON_ID_FAVORITE });
+			if (this._path.isListed(RyListType.favorite))
+			{
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('star-full'), tooltip: i18n(MESSAGES.removeFromFavorite), id: RyPathQPItem.ButtonId.favorite });
+			}
+			else
+			{
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('star'), tooltip: i18n(MESSAGES.addToFavorite), id: RyPathQPItem.ButtonId.favorite });
+			}
 		}
 	}
 
 	protected addCopyButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('copy'), tooltip: i18n(MESSAGES.copyPathToClipboard), id: this.BUTTON_ID_COPY });
+		if (RyConfiguration.getButtonVisibility('Copy'))
+		{
+			this.buttons.push({ iconPath: new vscode.ThemeIcon('copy'), tooltip: i18n(MESSAGES.copyPathToClipboard), id: RyPathQPItem.ButtonId.copy });
+		}
 	}
 
 	protected addInsertPathToEditorButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('insert'), tooltip: i18n(MESSAGES.insertPathToActiveEditor), id: this.BUTTON_ID_INSERT_PATH_TO_EDITOR });
+		if (RyConfiguration.getButtonVisibility('InsertToEditor'))
+		{
+			this.buttons.push({ iconPath: new vscode.ThemeIcon('insert'), tooltip: i18n(MESSAGES.insertPathToActiveEditor), id: RyPathQPItem.ButtonId.insertPathToEditor });
+		}
 	}
 
 	protected addInsertPathToTerminalButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('terminal'), tooltip: i18n(MESSAGES.insertPathToActiveTerminal), id: this.BUTTON_ID_INSERT_PATH_TO_TERMINAL });
+		if (RyConfiguration.getButtonVisibility('InsertToTerminal'))
+		{
+			this.buttons.push({ iconPath: new vscode.ThemeIcon('terminal'), tooltip: i18n(MESSAGES.insertPathToActiveTerminal), id: RyPathQPItem.ButtonId.insertPathToTerminal });
+		}
 	}
 
 	protected addOpenInEditorButton(): void
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('edit'), tooltip: i18n(MESSAGES.openInEditor), id: this.BUTTON_ID_OPEN_IN_EDITOR });
+		if (RyConfiguration.getButtonVisibility('OpenInEditor'))
+		{
+			this.buttons.push({ iconPath: new vscode.ThemeIcon('edit'), tooltip: i18n(MESSAGES.openInEditor), id: RyPathQPItem.ButtonId.openInEditor });
+		}
 	}
 
 	protected addRevealInFileExplorerButton()
 	{
-		this.buttons.push({ iconPath: new vscode.ThemeIcon('folder-opened'), tooltip: i18n(MESSAGES.revealInFileExplorer), id: this.BUTTON_ID_REVEAL_IN_FILE_EXPLORER });
+		if (RyConfiguration.getButtonVisibility('RevealInShell'))
+		{
+			this.buttons.push({ iconPath: new vscode.ThemeIcon('folder-opened'), tooltip: i18n(MESSAGES.revealInFileExplorer), id: RyPathQPItem.ButtonId.revealInFileExplorer });
+		}
 	}
 
 	/**
@@ -693,41 +818,6 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 		}
 	}
 
-	protected executeFileAction(): void
-	{
-		// 設定されているアクションを実行
-		switch (RyConfiguration.getDefaultAction())
-		{
-			case 'Open':
-				if (this.fullPath)
-				{
-					ryutils.openFileInEdtor(this.fullPath);
-				}
-				break;
-			case 'Copy':
-				if (this.insertPath)
-				{
-					ryutils.copyTextToClipboard(this.insertPath);
-				}
-				break;
-			case 'Editor':
-				this.insertPath && ryutils.insertTextToEdtior(this.insertPath);
-				break;
-			case 'Terminal':
-				if (this.insertPath)
-				{
-					ryutils.sendTextToTerminal(this.insertPath);
-				}
-				break;
-			case 'Reveal':
-				if (this.fullPath)
-				{
-					ryutils.openDirectory(path.dirname(this.fullPath));
-				}
-				break;
-		}
-	}
-
 	/**
 	 * ラベル用のインデント幅を文字列で作る。
 	 * @param indent インデントレベル。
@@ -740,48 +830,59 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 
 	override onButtonClick(button: ryutils.RyQuickPickButton): void
 	{
-		if (button.id === this.BUTTON_ID_COPY)
+		if (button.id === RyPathQPItem.ButtonId.copy)
 		{
 			// クリップボードにパスをコピー
-			ryutils.copyTextToClipboard(this.insertPath);
+			this._path.copyToClipboard();
 			this._ownerQuickPick.dispose();
 		}
-		else if (button.id === this.BUTTON_ID_INSERT_PATH_TO_EDITOR)
+		else if (button.id === RyPathQPItem.ButtonId.insertPathToEditor)
 		{
 			// エディターにパスを挿入
-			ryutils.insertTextToEdtior(this.insertPath);
+			this._path.insertToEditor();
 			this._ownerQuickPick.dispose();
 		}
-		else if (button.id === this.BUTTON_ID_INSERT_PATH_TO_TERMINAL)
+		else if (button.id === RyPathQPItem.ButtonId.insertPathToTerminal)
 		{
 			// アクティブなターミナルにパスを挿入
-			ryutils.sendTextToTerminal(this.insertPath);
+			this._path.insertToTerminal();
 			this._ownerQuickPick.dispose();
 		}
-		else if (button.id === this.BUTTON_ID_OPEN_IN_EDITOR)
+		else if (button.id === RyPathQPItem.ButtonId.openInEditor)
 		{
 			// エディタで開く
-			ryutils.openFileInEdtor(this.fullPath);
+			this._path.openInEditor();
 			this._ownerQuickPick.dispose();
 		}
-		else if (button.id === this.BUTTON_ID_REVEAL_IN_FILE_EXPLORER)
+		else if (button.id === RyPathQPItem.ButtonId.revealInFileExplorer)
 		{
 			// ディレクトリを開く
-			ryutils.openDirectory(this.fullPath);
+			this._path.openDirectory();
 			this._ownerQuickPick.dispose();
 		}
-		else if (button.id === this.BUTTON_ID_PIN)
+		else if (button.id === RyPathQPItem.ButtonId.pin || button.id === RyPathQPItem.ButtonId.favorite)
 		{
-			// クイックアクセスにピン留め
+			// お気に入り／クイックアクセス
 			// 登録されていた場合は削除。登録されていない場合は登録。
-			const func = this.amIPinned ? this.purgeMeFromPinnedList : this.addMeToPinnedList;
-			func.call(this);
+			const list = button.id === RyPathQPItem.ButtonId.pin ? RyListType.pinned : RyListType.favorite;
+			if (this._path.isListed(list))
+			{
+				this._path.removeFromTheList(list, () => this._ownerQuickPick.onListChanged(list));
+			}
+			else
+			{
+				this._path.addToTheList(list, () => this._ownerQuickPick.onListChanged(list));
+			}
 		}
-		else if (button.id === this.BUTTON_ID_FAVORITE)
+		else if (button.id === RyPathQPItem.ButtonId.openAsWorkspace)
 		{
-			// お気に入りに登録／解除
-			const func = this.amIFavorite ? this.removeFromFavoriteList : this.addToFavoriteList;
-			func.call(this);
+			this._ownerQuickPick.dispose();
+			this._path.openAsWorkspace(false);
+		}
+		else if (button.id === RyPathQPItem.ButtonId.openAsWorkspaceInNewWindow)
+		{
+			this._ownerQuickPick.dispose();
+			this._path.openAsWorkspace(true);
 		}
 	}
 
@@ -792,46 +893,15 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	{
 		this.label = this.indentToSpaces(value) + this._label;
 	}
-}
 
-
-
-
-
-
-
-
-
-
-class RyFileQPItem extends RyPathQPItem
-{
-	constructor(aQuickPick: RyQuickPickBase, fileInfo: MyFileInfo, baseDirectory: string)
+	public get path(): RyPath
 	{
-		const filenameOnly = fileInfo.filenameOnly();
-		super(aQuickPick, fileInfo.fullPath, filenameOnly!);
-
-		const relativePath = getRelativeOrAbsolutePath(baseDirectory, this.fullPath);
-
-		// このアイテムを選択したときに実際に挿入される文字列
-		const insertPath = `'${relativePath}'`;
-
-		const description = maskUserNameDirectory(insertPath === filenameOnly ? '' : insertPath);
-
-		this.indent = 0;
-		this.description = description;
-		this.insertPath = insertPath;
-
-		this.addPinAndFavoriteButton();
-		this.addCopyButton();
-		this.addOpenInEditorButton();
-		this.addInsertPathToEditorButton();
-		this.addInsertPathToTerminalButton();
+		return this._path;
 	}
 
-	override didAccept(): void
+	public equalPath(aPath: RyPath): boolean
 	{
-		this.executeFileAction();
-		this.ownerQuickPick.hide();
+		return false;
 	}
 }
 
@@ -843,48 +913,126 @@ class RyFileQPItem extends RyPathQPItem
 
 
 
-export class RyDirectoryQPItem extends RyPathQPItem
+export class RyValidPathQPItem extends RyPathQPItem
 {
-	/**
-	 *
-	 * @param aQuickPick
-	 * @param fileInfo
-	 * @param isGoToParent
-	 * @param baseDirectory
-	 */
-	constructor(aQuickPick: RyQuickPickBase, fileInfo: MyFileInfo, isGoToParent: boolean, baseDirectory: string)
+	// ピン留めされたアイテムか識別するためのフラグ
+	public isPinnedItem: boolean = false;
+
+	constructor(aQuickPick: RyQuickPickBase, aPath: RyPath, isGoToParent: boolean = false)
 	{
-		const icon = isGoToParent ? 'arrow-left' : 'folder';
+		let aLabel: string;
+		if (aPath.type === MyFileType.directory)
+		{
+			if (isGoToParent)
+			{
+				aLabel = `\$(arrow-left) ..` + path.sep;
+			}
+			else
+			{
+				aLabel = `\$(folder) ` + maskUserNameDirectory(aPath.filenameOnly) + path.sep;
+			}
+		}
+		else
+		{
+			aLabel = aPath.filenameOnly;
+		}
+		super(aQuickPick, aPath, aLabel);
 
-		// ディレクトリ名部分のみ
-		const dirName = isGoToParent ? '..' : fileInfo.filenameOnly();
-
-		super(aQuickPick, fileInfo.fullPath, `\$(${icon}) ` + maskUserNameDirectory(dirName) + path.sep);
-
-		// このアイテムを選択したときに実際に挿入されるパス
-		const relativePath = getRelativeOrAbsolutePath(baseDirectory, fileInfo.fullPath);
-
-
-		// このアイテムを選択したときに実際に挿入される文字列
-		const insertPath = `'${relativePath}'`;
-
-		this.indent = 0;
-		this.description = insertPath === dirName ? '' : maskUserNameDirectory(insertPath);
-		this.insertPath = insertPath;
+		if (aPath.type === MyFileType.directory)
+		{
+			const nameOnly = isGoToParent ? '..' : aPath.filenameOnly;
+			this.description = maskUserNameDirectory(this._path.insertPath === nameOnly ? '' : this._path.insertPath);
+		}
+		else
+		{
+			this.description = maskUserNameDirectory(this._path.insertPath === aPath.filenameOnly ? '' : this._path.insertPath);
+		}
 
 		this.addPinAndFavoriteButton();
 		this.addCopyButton();
-		this.addInsertPathToEditorButton();
-		this.addInsertPathToTerminalButton();
+
+		// エディターで開くボタンはファイルのみ
+		if (aPath.type === MyFileType.file)
+		{
+			this.addOpenInEditorButton();
+		}
+
+		if (ryutils.isActiveEditorVisible())
+		{
+			this.addInsertPathToEditorButton();
+		}
+
+		if (vscode.window.activeTerminal)
+		{
+			this.addInsertPathToTerminalButton();
+		}
+
 		this.addRevealInFileExplorerButton();
+
+		if (this.path.isDirectory)
+		{
+			// ワークスペースとして開くボタン
+			if (RyConfiguration.getButtonVisibility('OpenAsWorkspace'))
+			{
+				const msg = MESSAGES.openInAppCommandLabel;
+				const tip = i18n(msg, { app: 'VS Code' });
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('window'), tooltip: tip, id: RyPathQPItem.ButtonId.openAsWorkspace });
+			}
+
+			// ワークスペースとして開くボタン（新しいウィンドウ）
+			if (RyConfiguration.getButtonVisibility('OpenAsWorkspaceInNewWindow'))
+			{
+				const msg = MESSAGES.openDirectoryAsWorkspaceInNewWindow;
+				const tip = i18n(msg, { app: 'VS Code' });
+				this.buttons.push({ iconPath: new vscode.ThemeIcon('empty-window'), tooltip: tip, id: RyPathQPItem.ButtonId.openAsWorkspaceInNewWindow });
+			}
+		}
 	}
 
-	/**
-	 * このアイテムを選択したときの処理。
-	 */
+	public override equalPath(aPath: RyPath): boolean
+	{
+		return this._path.equals(aPath);
+	}
+
 	override didAccept(): void
 	{
-		this._ownerQuickPick.showDirectory(this.fullPath);
+		if (this._path.type === MyFileType.directory)
+		{
+			this._ownerQuickPick.showDirectory(this._path);
+		}
+		else
+		{
+			this.executeFileAction();
+			this.ownerQuickPick.hide();
+		}
+	}
+
+	protected executeFileAction(): void
+	{
+		// 設定されているアクションを実行
+		switch (RyConfiguration.getDefaultAction())
+		{
+			case 'Menu':
+				// 循環参照を避けるためにここでインポートしてる
+				const { RyFileActionQuickPick, PreviousQuickPickType } = require('./ryFileActionQuickPick');
+				new RyFileActionQuickPick(this._path, { type: PreviousQuickPickType.browser, path: this._path, wasQuickAccess: this.isPinnedItem }).show();
+				break;
+			case 'Open':
+				this._path.openInEditor();
+				break;
+			case 'Copy':
+				this._path.copyToClipboard();
+				break;
+			case 'Editor':
+				this._path.insertToEditor();
+				break;
+			case 'Terminal':
+				this._path.insertToTerminal();
+				break;
+			case 'Reveal':
+				this._path.openDirectory();
+				break;
+		}
 	}
 }
 
@@ -903,11 +1051,11 @@ export class RyDirectoryQPItem extends RyPathQPItem
  */
 export class RyErrorPathQPItem extends RyPathQPItem
 {
-	constructor(aQuickPick: RyQuickPickBase, aFileInfo: MyFileInfo)
+	constructor(aQuickPick: RyQuickPickBase, aFileInfo: RyPath)
 	{
 		const icon = aFileInfo.type === MyFileType.notFound ? 'question' : 'error';
 		const label = `\$(${icon}) ` + path.basename(aFileInfo.fullPath);
-		super(aQuickPick, aFileInfo.fullPath, label);
+		super(aQuickPick, aFileInfo, label);
 
 		// description にはフルパスを表示
 		this.description = aFileInfo.fullPath;
@@ -916,6 +1064,111 @@ export class RyErrorPathQPItem extends RyPathQPItem
 		if (aFileInfo.type !== MyFileType.error)
 		{
 			this.addPinAndFavoriteButton();
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+export enum RyPathAction { copyToClipboard, insertToEditor, insertToTermnal, addToFavorite, removeFromFavorite, addToPinned, removeFromPinned, openInEditor };
+
+export class RyPathActionQPItem extends RyPathQPItem
+{
+	private readonly _action: RyPathAction;
+
+	constructor(aQuickPick: RyQuickPickBase, aPath: RyPath, action: RyPathAction)
+	{
+		let aLabel = '';
+		switch (action)
+		{
+			case RyPathAction.copyToClipboard:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(copy) ` + i18n(MESSAGES['directoryAction.copyToClipboard']);
+				break;
+
+			case RyPathAction.insertToEditor:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(insert) ` + i18n(MESSAGES['directoryAction.insertToEditor']);
+				break;
+
+			case RyPathAction.insertToTermnal:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(terminal) ` + i18n(MESSAGES['directoryAction.insertToTerminal']);
+				break;
+
+			case RyPathAction.addToFavorite:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(star) ` + i18n(MESSAGES['directoryAction.addToFavorite']);
+				break;
+
+			case RyPathAction.removeFromFavorite:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(star-full) ` + i18n(MESSAGES['directoryAction.removeFromFavorite']);
+				break;
+
+			case RyPathAction.addToPinned:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(pin) ` + i18n(MESSAGES['directoryAction.addToPinned']);
+				break;
+
+			case RyPathAction.removeFromPinned:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(pinned) ` + i18n(MESSAGES['directoryAction.removeFromPinned']);
+				break;
+
+			case RyPathAction.openInEditor:
+				aLabel = `${COMMAND_LABEL_PREFIX} $(edit) ` + i18n(MESSAGES.openInEditor);
+				break;
+		}
+
+		super(aQuickPick, aPath, aLabel);
+		this._action = action;
+	}
+
+	override didAccept(): void
+	{
+		switch (this._action)
+		{
+			// クリップボードにパスをコピー
+			case RyPathAction.copyToClipboard:
+				this._path.copyToClipboard();
+				this._ownerQuickPick.dispose();
+				break;
+
+			// エディターにパスを挿入
+			case RyPathAction.insertToEditor:
+				this._path.insertToEditor();
+				this._ownerQuickPick.dispose();
+				break;
+
+			// アクティブなターミナルにパスを挿入
+			case RyPathAction.insertToTermnal:
+				this._path.insertToTerminal();
+				this._ownerQuickPick.dispose();
+				break;
+
+			// ディレクトリをお気に入りに追加／ピン留め
+			case RyPathAction.addToFavorite:
+			case RyPathAction.addToPinned:
+			{
+				const list = this._action === RyPathAction.addToFavorite ? RyListType.favorite : RyListType.pinned;
+				this._path.addToTheList(list, () => this._ownerQuickPick.onListChanged(list));
+				break;
+			}
+
+			// ディレクトリをお気に入りから削除
+			case RyPathAction.removeFromFavorite:
+			case RyPathAction.removeFromPinned:
+			{
+				const list = this._action === RyPathAction.removeFromFavorite ? RyListType.favorite : RyListType.pinned;
+				this._path.removeFromTheList(list, () => this._ownerQuickPick.onListChanged(list));
+				break;
+			}
+
+			// エディターで開く
+			case RyPathAction.openInEditor:
+				this._path.openInEditor();
+				break;
 		}
 	}
 }

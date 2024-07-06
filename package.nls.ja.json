@@ -1,5 +1,6 @@
 {
 	"commandTitle.favorites": "Path Maker - お気に入り",
+	"commandTitle.history": "Path Maker - 最近使ったパス",
 	"baseDirectory": "**設定する必要はありません。内部で使用されます。** 基準ディレクトリを設定したときにこの値に保存されます。",
 	"groupDirectories": "ディレクトリとファイルを分けて表示する。",
 	"showDirectoryIcons": "ディレクトリアイコンを表示する。",
@@ -11,6 +12,7 @@
 	"startDirectory.userDirectory": "ユーザーのホームディレクトリ。",
 	"lastDirectory": "**設定する必要はありません。内部で使用されます。** `StartDirectory` を `Last` に設定したときにこの値が使用されます。",
 	"defaultAction": "ファイルを選択した時の処理。",
+	"defaultAction.menu": "メニューを表示してアクションを選ぶ。",
 	"defaultAction.open": "ファイルをエディターで開く。",
 	"defaultAction.copy": "パスをクリップボードにコピーする。",
 	"defaultAction.editor": "パスをアクティブなターミナルに挿入する。",
@@ -19,8 +21,19 @@
 	"hideUserName": "パスの中にあるユーザー名のディレクトリを隠す。",
 	"pinnedList": "**設定する必要はありません。内部で使用されます。** クイックアクセスにピン留めされたファイル／ディレクトリのリストです。クイックアクセスを全て削除するにはこの値を削除して下さい。",
 	"favoriteList": "**設定する必要はありません。内部で使用されます。** お気に入りファイル／ディレクトリのリストです。お気に入りを全て削除するにはこの値を削除して下さい。",
+	"recentList": "**設定する必要はありません。内部で使用されます。** 最近使用したファイル／ディレクトリのリストです。履歴を全て削除するにはこの値を削除して下さい。",
 	"showRelativeRoute": "基準ディレクトリ（設定されていない場合はルートディレクトリ）からの経路上にあるディレクトリを表示します。",
 	"pathPresentation": "パスの表示形式。",
 	"pathPresentation.relative": "基準ディレクトリからの相対パスで表示。",
-	"pathPresentation.absolute": "絶対パスで表示。"
+	"pathPresentation.absolute": "絶対パスで表示。",
+	"itemButtonVisibility": "各アイテムの右に表示するボタン。",
+	"itemButtonVisibility.Copy": "パスをクリップボードにコピーするボタン",
+	"itemButtonVisibility.InsertToEditor": "パスをエディターに挿入するボタン",
+	"itemButtonVisibility.InsertToTerminal": "パスをターミナルに挿入するボタン",
+	"itemButtonVisibility.OpenInEditor": "ファイルをエディターで開くボタン",
+	"itemButtonVisibility.RevealInShell": "エクスプローラーで表示するボタン",
+	"itemButtonVisibility.OpenAsWorkspace": "ワークスペースとして開くボタン",
+	"itemButtonVisibility.OpenAsWorkspaceInNewWindow": "ワークスペースとして開く（新しいウィンドウ）ボタン",
+	"itemButtonVisibility.Pin": "クイックアクセスにピン留めするボタン",
+	"itemButtonVisibility.Favorite": "お気に入りに登録するボタン"
 }

@@ -32,6 +32,11 @@
 				"command": "romly-path-maker.showFavorites",
 				"title": "%commandTitle.favorites%",
 				"category": "Romly"
+			},
+			{
+				"command": "romly-path-maker.showHistory",
+				"title": "%commandTitle.history%",
+				"category": "Romly"
 			}
 		],
 
@@ -85,8 +90,9 @@
 				"romly-path-maker.defaultAction":
 				{
 					"type": "string",
-					"enum": ["Open", "Copy", "Editor", "Terminal", "Reveal"],
+					"enum": ["Menu", "Open", "Copy", "Editor", "Terminal", "Reveal"],
 					"markdownEnumDescriptions": [
+						"%defaultAction.menu%",
 						"%defaultAction.open%",
 						"%defaultAction.copy%",
 						"%defaultAction.editor%",
@@ -104,16 +110,47 @@
 				"romly-path-maker.pinnedList":
 				{
 					"type": "array",
-					"items": { "type": "string" },
+					"items":
+					{
+						"type": "object",
+						"properties":
+						{
+							"path": { "type": "string" },
+							"added": { "type": "string" }
+						}
+					},
 					"default": [],
 					"markdownDescription": "%pinnedList%"
 				},
 				"romly-path-maker.favoriteList":
 				{
 					"type": "array",
-					"items": { "type": "string" },
+					"items":
+					{
+						"type": "object",
+						"properties":
+						{
+							"path": { "type": "string" },
+							"added": { "type": "string" }
+						}
+					},
 					"default": [],
 					"markdownDescription": "%favoriteList%"
+				},
+				"romly-path-maker.recentList":
+				{
+					"type": "array",
+					"items":
+					{
+						"type": "object",
+						"properties":
+						{
+							"path": { "type": "string" },
+							"added": { "type": "string" }
+						}
+					},
+					"default": [],
+					"markdownDescription": "%recentList%"
 				},
 				"romly-path-maker.showRelativeRoute":
 				{
@@ -123,11 +160,42 @@
 				},
 				"romly-path-maker.pathPresentation":
 				{
-					"type": "array",
+					"type": "string",
 					"enum": ["Relative", "Absolute"],
 					"default": "Relative",
 					"markdownEnumDescriptions": ["%pathPresentation.relative%", "%pathPresentation.absolute%"],
 					"markdownDescription": "%pathPresentation%"
+				},
+				"romly-path-maker.itemButtonVisibility":
+				{
+					"type": "array",
+					"items":
+					{
+						"type": "string",
+						"enum": [
+							"Copy",
+							"InsertToEditor",
+							"InsertToTerminal",
+							"OpenInEditor",
+							"RevealInShell",
+							"OpenAsWorkspace",
+							"OpenAsWorkspaceInNewWindow",
+							"Pin",
+							"Favorite"],
+						"markdownEnumDescriptions": [
+							"%itemButtonVisibility.Copy%",
+							"%itemButtonVisibility.InsertToEditor%",
+							"%itemButtonVisibility.InsertToTerminal%",
+							"%itemButtonVisibility.OpenInEditor%",
+							"%itemButtonVisibility.RevealInShell%",
+							"%itemButtonVisibility.OpenAsWorkspace%",
+							"%itemButtonVisibility.OpenAsWorkspaceInNewWindow%",
+							"%itemButtonVisibility.Pin%",
+							"%itemButtonVisibility.Favorite%"],
+					},
+					"default": ["Pin", "Favorite"],
+					"markdownDescription": "%itemButtonVisibility%",
+					"uniqueItems": true
 				}
 			}
 		}

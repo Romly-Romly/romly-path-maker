@@ -1,5 +1,6 @@
 {
 	"commandTitle.favorites": "Path Maker - Favorites",
+	"commandTitle.history": "Path Maker - History",
 	"baseDirectory": "**You don't have to set this. It's used internally.** When the base directory set, it will be stored in this value.",
 	"groupDirectories": "Display directories and files separately.",
 	"showDirectoryIcons": "Show directory icons.",
@@ -11,6 +12,7 @@
 	"startDirectory.userDirectory": "User's home directory.",
 	"lastDirectory": "**You don't have to set this. It's used internally.** When `StartDirectory` is `Last`, this value is used.",
 	"defaultAction": "The action when the file is selected.",
+	"defaultAction.menu": "Show the menu and select an action.",
 	"defaultAction.open": "Open the file in editor.",
 	"defaultAction.copy": "Copy file path to clipboard.",
 	"defaultAction.editor": "Insert file path to active editor.",
@@ -19,8 +21,19 @@
 	"hideUserName": "Mask the directory name of the user name in the pathes.",
 	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
 	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
+	"recentList": "**You don't have to set this. It's used internally.** List of recently used files/directories. Delete this value if you want to clear all history.",
 	"showRelativeRoute": "Displays directories in the path from the base directory (or root directory if not set).",
 	"pathPresentation": "Path display format.",
 	"pathPresentation.relative": "Display as a relative path from the base directory.",
-	"pathPresentation.absolute": "Display as an absolute path."
+	"pathPresentation.absolute": "Display as an absolute path.",
+	"itemButtonVisibility": "Buttons displayed to the right of each item.",
+	"itemButtonVisibility.Copy": "Button to copy the path to clipboard",
+	"itemButtonVisibility.InsertToEditor": "Button to insert the path into active editor",
+	"itemButtonVisibility.InsertToTerminal": "Button to insert the path into active terminal",
+	"itemButtonVisibility.OpenInEditor": "Button to open the file in editor",
+	"itemButtonVisibility.RevealInShell": "Button to reveal in Explorer",
+	"itemButtonVisibility.OpenAsWorkspace": "Button to open directory as workspace",
+	"itemButtonVisibility.OpenAsWorkspaceInNewWindow": "Button to open directory as workspace in a new window",
+	"itemButtonVisibility.Pin": "Button to pin to the quick access",
+	"itemButtonVisibility.Favorite": "Button to add to the favorites"
 }

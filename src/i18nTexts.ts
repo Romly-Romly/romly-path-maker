@@ -173,12 +173,20 @@ class ProjectMessages
 		en: 'Go to input path',
 	};
 
-	revealInExplorerCommandLabel: I18NText =
+	openInAppCommandLabel: I18NText =
 	{
 		ja: 'このディレクトリを{app}で開く',
 		en: 'Open this directory in {app}',
 		fr: "Ouvrir ce répertoire dans {app}",
 		'zh-cn': '在{app}中打开此目录',
+	};
+
+	revealInExplorerCommandLabel: I18NText =
+	{
+		ja: 'このディレクトリを{app}で表示',
+		en: 'Reveal this directory in {app}',
+		fr: "Révéler ce répertoire dans {app}",
+		'zh-cn': "在{app}中显示此目录"
 	};
 
 	'error.directoryNotFound': I18NText =
@@ -240,10 +248,22 @@ class ProjectMessages
 		en: 'Favorites',
 	};
 
+	historyQuickPickTitle: I18NText =
+	{
+		ja: '履歴',
+		en: 'History',
+	};
+
 	directoryNotFoundItemLabel: I18NText =
 	{
 		ja: 'ディレクトリが見付かりません。',
 		en: 'The directory not found.',
+	};
+
+	directoryErrorItemLabel: I18NText =
+	{
+		ja: 'ディレクトリを取得できませんでした',
+		en: 'Failed to get directory',
 	};
 
 	backToBrowseModeItemLabel: I18NText =
@@ -258,10 +278,70 @@ class ProjectMessages
 		en: 'No favorite items.',
 	};
 
+	noHistory: I18NText =
+	{
+		ja: '最近使ったパスがありません。',
+		en: 'No recent items.',
+	};
+
 	directoryTree: I18NText =
 	{
 		ja: 'ディレクトリツリー',
 		en: 'Directory tree',
+	};
+
+	'directoryAction.copyToClipboard': I18NText =
+	{
+		ja: 'パスをクリップボードにコピーする',
+		en: 'Copy path to clipboard',
+	};
+
+	'directoryAction.insertToEditor': I18NText =
+	{
+		ja: 'パスをエディターに挿入する',
+		en: 'Insert path to editor',
+	};
+
+	'directoryAction.insertToTerminal': I18NText =
+	{
+		ja: 'パスをターミナルに挿入する',
+		en: 'Insert path to terminal',
+	};
+
+	'directoryAction.addToFavorite': I18NText =
+	{
+		ja: 'パスをお気に入りに追加する',
+		en: 'Add path to favorites',
+	};
+
+	'directoryAction.removeFromFavorite': I18NText =
+	{
+		ja: 'パスをお気に入りから削除する',
+		en: 'Remove path from favorites',
+	};
+
+	'directoryAction.addToPinned': I18NText =
+	{
+		ja: 'パスをクイックアクセスにピン留めする',
+		en: 'Pin path to quick access',
+	};
+
+	'directoryAction.removeFromPinned': I18NText =
+	{
+		ja: 'パスのピン留めを解除する',
+		en: 'Unpin path from quick access',
+	};
+
+	actionToTheFile: I18NText =
+	{
+		ja: '{filename} への操作',
+		en: 'Action to the "{filename}"',
+	};
+
+	goBack: I18NText =
+	{
+		ja: '戻る',
+		en: 'Back',
 	};
 };
 

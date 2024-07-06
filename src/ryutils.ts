@@ -54,12 +54,31 @@ export function copyTextToClipboard(text: string): void
 
 
 /**
+ * アクティブなエディターが表示されていれば true
+ * @returns
+ */
+export function isActiveEditorVisible(): boolean
+{
+	const activeEditor = vscode.window.activeTextEditor;
+	return Boolean(activeEditor && vscode.window.visibleTextEditors.includes(activeEditor));
+}
+
+
+
+
+
+
+
+
+
+
+/**
  * 文字列をアクティブなエディタに挿入する。
  * @param text
  */
 export function insertTextToEdtior(text: string): void
 {
-	if (text && vscode.window.activeTextEditor)
+	if (text && isActiveEditorVisible() && vscode.window.activeTextEditor)
 	{
 		vscode.window.activeTextEditor.insertSnippet(new vscode.SnippetString(text));
 	}
