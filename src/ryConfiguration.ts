@@ -75,6 +75,9 @@ export interface RyPathListItem
  */
 export class RyConfiguration
 {
+	// 履歴の最大数
+	public static MAX_HISTORY_SIZE = 100;
+
 	/**
 	 * ワークスペースのスコープに設定を書き込む。ワークスペースが見つからなかった場合にはグローバルスコープに書き込む。
 	 *
@@ -254,11 +257,18 @@ export class RyConfiguration
 	 * 指定されたパスをリストに追加する。ただし既に追加されている場合は追加日を更新する。
 	 * @param path 追加するパス。
 	 * @param toList リストの種類を指定する。
+	 * @param maxListSize リストの最大サイズを指定する。既にリストがこのサイズ以上の場合は追加しない。0を指定した場合は必ず追加する。
 	 * @returns
 	 */
-	public static addToTheList(path: string, toList: RyListType): Thenable<void>
+	public static addToTheList(path: string, toList: RyListType, maxListSize: number = 0): Thenable<void>
 	{
 		let list = RyConfiguration.getList(toList);
+
+		// リストの最大サイズを超えている場合は追加しない
+		if (maxListSize > 0 && list.length >= maxListSize)
+		{
+			return Promise.resolve();
+		}
 
 		const currentTime = Date.now();
 		let updated = false;

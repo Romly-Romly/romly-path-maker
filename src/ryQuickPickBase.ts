@@ -522,7 +522,7 @@ export class RyPath
 		ryutils.copyTextToClipboard(this.insertPath);
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	public insertToEditor(): void
@@ -530,7 +530,7 @@ export class RyPath
 		ryutils.insertTextToEdtior(this.insertPath);
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	public insertToTerminal(): void
@@ -538,7 +538,7 @@ export class RyPath
 		ryutils.sendTextToTerminal(this.insertPath);
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	public openDirectory(): void
@@ -554,7 +554,7 @@ export class RyPath
 //		}
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	public openInEditor(): void
@@ -562,7 +562,7 @@ export class RyPath
 		ryutils.openFileInEdtor(this.fullPath);
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	/**
@@ -574,7 +574,7 @@ export class RyPath
 		vscode.commands.executeCommand('vscode.openFolder', vscode.Uri.file(this.fullPath), newWindow);
 
 		// 履歴に追加
-		RyConfiguration.addToTheList(this.fullPath, RyListType.history)
+		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
 	}
 
 	/**
