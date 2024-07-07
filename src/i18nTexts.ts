@@ -343,6 +343,24 @@ class ProjectMessages
 		ja: '戻る',
 		en: 'Back',
 	};
+
+	showRestDirectories: I18NText =
+	{
+		ja: '残りのディレクトリ({count})を表示する',
+		en: 'Show remaining directories ({count})',
+	};
+
+	showRestFiles: I18NText =
+	{
+		ja: '残りのディレクトリ({count})を表示する',
+		en: 'Show remaining directories ({count})',
+	};
+
+	showRestItems: I18NText =
+	{
+		ja: '残りのアイテム({count})を表示する',
+		en: 'Show remaining items ({count})',
+	};
 };
 
 export const MESSAGES = new ProjectMessages();

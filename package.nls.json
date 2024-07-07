@@ -22,7 +22,7 @@
 	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
 	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
 	"recentList": "**You don't have to set this. It's used internally.** List of recently used files/directories. Delete this value if you want to clear all history.",
-	"showRelativeRoute": "Displays directories in the path from the base directory (or root directory if not set).",
+	"showRelativeRoute": "Displays the directories along the path from the base directory (or root directory in case of absolute path display).",
 	"pathPresentation": "Path display format.",
 	"pathPresentation.relative": "Display as a relative path from the base directory.",
 	"pathPresentation.absolute": "Display as an absolute path.",
@@ -35,5 +35,8 @@
 	"itemButtonVisibility.OpenAsWorkspace": "Button to open directory as workspace",
 	"itemButtonVisibility.OpenAsWorkspaceInNewWindow": "Button to open directory as workspace in a new window",
 	"itemButtonVisibility.Pin": "Button to pin to the quick access",
-	"itemButtonVisibility.Favorite": "Button to add to the favorites"
+	"itemButtonVisibility.Favorite": "Button to add to the favorites",
+	"maxDirectories": "Max number of directories to display. This is to prevent the list from becoming too long. The remaining directories can be viewed by selecting 'Show remaining directories'. Set to 0 to display all directories from the start. This setting is only effective when directories and files are displayed separately.",
+	"maxFiles": "Max number of files to display. This is to prevent the list from becoming too long. The remaining files can be viewed by selecting 'Show remaining files'. Set to 0 to display all files from the start. This setting is only effective when directories and files are displayed separately.",
+	"maxDirectoriesAndFiles": "Max number of directories and files to display. This is to prevent the list from becoming too long. The remaining items can be viewed by selecting 'Show remaining items'. Set to 0 to display all items from the start. This setting is only effective when directories and files are displayed together."
 }

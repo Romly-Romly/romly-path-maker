@@ -36,6 +36,32 @@ export function endsWithPathSeparator(testPath: string): boolean
 
 
 /**
+ * パス文字列を各パスに分割する。
+ * @param relativePath
+ * @returns
+ */
+export function splitPath(relativePath: string): string[]
+{
+	// パスを正規化して、余計な '..' などを解決
+	const normalizedPath = path.normalize(relativePath);
+
+	// パス区切り文字で分割
+	const parts = normalizedPath.split(path.sep);
+
+	// 空要素を削除
+	return parts.filter(part => part !== '');
+}
+
+
+
+
+
+
+
+
+
+
+/**
  * 文字列をクリップボードにコピーする。
  * @param text コピーする文字列。
  */

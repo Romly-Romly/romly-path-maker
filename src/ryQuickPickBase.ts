@@ -823,7 +823,7 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 * @param indent インデントレベル。
 	 * @returns 半角スペースで構成された擬似的なインデント文字列。
 	 */
-	protected indentToSpaces(indent: number): string
+	public static indentToSpaces(indent: number): string
 	{
 		return '   '.repeat(indent);
 	}
@@ -891,7 +891,7 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 	 */
 	public set indent(value: number)
 	{
-		this.label = this.indentToSpaces(value) + this._label;
+		this.label = RyPathQPItem.indentToSpaces(value) + this._label;
 	}
 
 	public get path(): RyPath

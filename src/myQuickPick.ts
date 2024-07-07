@@ -7,7 +7,7 @@ import { COMMON_TEXTS, i18n, i18nPlural, I18NText } from "./i18n";
 import { MESSAGES } from "./i18nTexts";
 
 import * as ryutils from './ryutils';
-import { RyConfiguration, RyListType } from './ryConfiguration';
+import { RyConfiguration, RyListType, RyPathItemsType } from './ryConfiguration';
 import
 {
 	RyQuickPickBase,
@@ -81,6 +81,12 @@ function listFilesAndHandleError(directory: RyPath): ListFilesResult
 
 
 
+interface TruncatedSet
+{
+	truncatedItems: RyPathQPItem[];
+	showRemainingItem: RyShowRemainingDirectoriesQPItem;
+}
+
 /**
  * vscode の this._theQuickPick をラッパーしてこの拡張機能用に使いやすくしたクラス。
  * 2024/06/30
@@ -90,17 +96,30 @@ export class MyQuickPick extends RyQuickPickBase
 	// 現在表示しているディレクトリ
 	private readonly _path: RyPath;
 
+	// RyPathItemsType の各値に対する Record<RyPathItemsType, TruncatedSet> のセット
+	private readonly _truncatedSets: Record<RyPathItemsType, TruncatedSet>;
+
 	constructor(directory: RyPath)
 	{
 		super();
 		this._path = directory;
+
+		// ファイルとディレクトリの表示数制限用のセットを初期化
+		this._truncatedSets = {} as Record<RyPathItemsType, TruncatedSet>;
+		for (const type of Object.values(RyPathItemsType))
+		{
+			this._truncatedSets[type] =
+			{
+				truncatedItems: [],
+				showRemainingItem: new RyShowRemainingDirectoriesQPItem(this, type)
+			}
+		}
 
 		const files = listFilesAndHandleError(directory);
 		if (files.result === FileListStatus.SUCCESS)
 		{
 			// 最後に表示したディレクトリとして設定に保存しておく
 			RyConfiguration.setLastDirectory(directory.fullPath).catch((error) => console.error(error));
-
 
 			this._theQuickPick.items = this.createQuickPickItems(files);
 			this._theQuickPick.title = maskUserNameDirectory(this._path.fullPath);
@@ -196,28 +215,13 @@ export class MyQuickPick extends RyQuickPickBase
 	 */
 	private createRelativeRouteFromBaseDirectory(fullPath: string, baseDir: string): { quickPickItems: RyPathQPItem[], lastIndent: number }
 	{
-		/**
-		 * パス文字列を各パスに分割する。
-		 * @param relativePath
-		 * @returns
-		 */
-		function splitPath(relativePath: string): string[]
-		{
-			// パスを正規化して、余計な '..' などを解決
-			const normalizedPath = path.normalize(relativePath);
-			// パス区切り文字で分割
-			const parts = normalizedPath.split(path.sep);
-			// 空要素を削除
-			return parts.filter(part => part !== '');
-		}
-
 		// 相対パスを求める
 		const relativePath = path.relative(baseDir, fullPath);
 
 		const itemsInRoute: { indent: number, fullPath: string }[] = [];
 		let currentPath: string = baseDir;
 		let indent = 0;
-		splitPath(relativePath).forEach(pathComponent =>
+		ryutils.splitPath(relativePath).forEach(pathComponent =>
 		{
 			// カレントディレクトリを示す '.' は無視
 			if (pathComponent !== '.')
@@ -367,11 +371,11 @@ export class MyQuickPick extends RyQuickPickBase
 			}
 
 			// 各ディレクトリ
-			quickPickItems.push(...this.convertFileInfosToPathQPItems(dirOnly, (item, index) => item.indent = indent ));
+			quickPickItems.push(...this.createLimitedPathQPItems(dirOnly, indent, RyPathItemsType.directories));
 
 			// 次にファイル
 			quickPickItems.push({ label: i18nPlural(COMMON_TEXTS.files, fileOnly.length), kind: vscode.QuickPickItemKind.Separator });
-			quickPickItems.push(...this.convertFileInfosToPathQPItems(fileOnly, (item, index) => item.indent = indent ));
+			quickPickItems.push(...this.createLimitedPathQPItems(fileOnly, indent, RyPathItemsType.files));
 		}
 		else
 		{
@@ -388,7 +392,7 @@ export class MyQuickPick extends RyQuickPickBase
 			// ファイルの数を表示
 			quickPickItems.push({ label: i18nPlural(COMMON_TEXTS.directories, dirOnly.length) + ' / ' + i18nPlural(COMMON_TEXTS.files, fileOnly.length), kind: vscode.QuickPickItemKind.Separator });
 
-			quickPickItems.push(...this.convertFileInfosToPathQPItems(files, (item, index) => item.indent = indent));
+			quickPickItems.push(...this.createLimitedPathQPItems(files, indent, RyPathItemsType.mixed));
 		}
 
 		// ------------------------------------------------------------
@@ -561,6 +565,143 @@ export class MyQuickPick extends RyQuickPickBase
 		if (found)
 		{
 			this._theQuickPick.activeItems = [found];
+		}
+	}
+
+	/**
+	 * 省略されている残りのディレクトリを表示する。
+	 */
+	public showRemainingItems(itemsType: RyPathItemsType): void
+	{
+		const truncatedItems = this._truncatedSets[itemsType].truncatedItems;
+		const showRemainingItem = this._truncatedSets[itemsType].showRemainingItem;
+
+		// 省略したディレクトリがなければ何もしない
+		if (truncatedItems.length === 0)
+		{
+			return;
+		}
+
+		const items = this._theQuickPick.items;
+
+		// 自身に当たる部分を取り除き、そこに残りのディレクトリを追加する
+		const index = items.indexOf(showRemainingItem);
+		if (index >= 0)
+		{
+			this._theQuickPick.items = [
+				...items.slice(0, index),
+				...truncatedItems,
+				...items.slice(index + 1)
+			];
+
+			this._theQuickPick.activeItems = [truncatedItems[0]];
+			truncatedItems.length = 0;
+		}
+	}
+
+	/**
+	 * RyPath[] から RyPathQPItem[] に変換する。ただし、設定の最大表示数に従って余剰分は別のリストに保存する。
+	 * @param paths
+	 * @param indent
+	 * @param pathItemsType
+	 * @returns
+	 */
+	private createLimitedPathQPItems(paths: RyPath[], indent: number, pathItemsType: RyPathItemsType): vscode.QuickPickItem[]
+	{
+		const result: vscode.QuickPickItem[] = [];
+
+		const dirItems = this.convertFileInfosToPathQPItems(paths, (item, index) => item.indent = indent );
+		const max = RyConfiguration.getMaxItemsToDisplay(pathItemsType);
+		if (max > 0 && dirItems.length > max)
+		{
+			// 最大表示数までは普通に追加
+			result.push(...dirItems.slice(0, max));
+
+			// 残りは別のリストに追加して保存しておく
+			this._truncatedSets[pathItemsType].truncatedItems.push(...dirItems.slice(max));
+
+			// 残りを表示するためのアイテムを追加
+			result.push(this._truncatedSets[pathItemsType].showRemainingItem);
+
+			this._truncatedSets[pathItemsType].showRemainingItem.indent = indent;
+			this._truncatedSets[pathItemsType].showRemainingItem.remainCount = dirItems.length - max;
+		}
+		else
+		{
+			result.push(...dirItems);
+		}
+
+		return result;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 残りのディレクトリを表示するための QuickPickItem
+ * 2024/07/07
+ */
+class RyShowRemainingDirectoriesQPItem extends RyQuickPickItem
+{
+	private readonly _pathItemsType: RyPathItemsType;
+	private _indent: number = 0;
+	private _remainCount: number = 0;
+
+	constructor(aQuickPick: RyQuickPickBase, directories: RyPathItemsType)
+	{
+		super(aQuickPick);
+		this._pathItemsType = directories;
+		this.indent = 0;
+	}
+
+	private updateLabel(): void
+	{
+		let msg;
+		switch (this._pathItemsType)
+		{
+			case RyPathItemsType.directories:
+				msg = MESSAGES.showRestDirectories;
+				break;
+			case RyPathItemsType.files:
+				msg = MESSAGES.showRestFiles;
+				break;
+			case RyPathItemsType.mixed:
+				msg = MESSAGES.showRestItems;
+				break;
+		}
+		this.label = RyPathQPItem.indentToSpaces(this._indent) + i18n(msg, { count: String(this._remainCount) });
+	}
+
+	/**
+	 * 残りのディレクトリ／ファイル数を設定するアクセスメソッド。ラベルに表示されるだけ。
+	 */
+	public set remainCount(value: number)
+	{
+		this._remainCount = value;
+		this.updateLabel();
+	}
+
+	/**
+	 * ラベルのインデントを設定するアクセスメソッド。
+	 */
+	public set indent(value: number)
+	{
+		this._indent = value;
+		this.updateLabel();
+	}
+
+	public override didAccept(): void
+	{
+		if (this._ownerQuickPick instanceof MyQuickPick)
+		{
+			this._ownerQuickPick.showRemainingItems(this._pathItemsType);
 		}
 	}
 }

@@ -40,6 +40,14 @@ export type RyPathPresentation = 'absolute' | 'relative';
 export type RyDefaultAction = 'Menu' | 'Open' | 'Copy' | 'Editor' | 'Terminal' | 'Reveal';
 export type RyButtonName = 'Copy' | 'InsertToEditor' | 'InsertToTerminal' | 'OpenInEditor' | 'RevealInShell' | 'OpenAsWorkspace' | 'OpenAsWorkspaceInNewWindow' | 'Pin' | 'Favorite';
 
+// アイテムを表示する最大数の種類。
+export enum RyPathItemsType
+{
+	directories = 'maxDirectories',
+	files = 'maxFiles',
+	mixed = 'maxDirectoriesAndFiles'
+}
+
 // リストの種類
 // 都合上、文字列は設定のキーにしてある。
 export enum RyListType
@@ -325,5 +333,15 @@ export class RyConfiguration
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 		const names = config.get<string[]>('itemButtonVisibility') || [];
 		return names.includes(buttonName);
+	}
+
+	/**
+	 * ディレクトリ／ファイルを表示する最大数を取得する。
+	 * @returns
+	 */
+	public static getMaxItemsToDisplay(pathItemsType: RyPathItemsType): number
+	{
+		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+		return config.get<number>(pathItemsType) ?? (pathItemsType === RyPathItemsType.mixed ? 10 : 5);
 	}
 }

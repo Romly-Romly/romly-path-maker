@@ -191,11 +191,73 @@
 							"%itemButtonVisibility.OpenAsWorkspace%",
 							"%itemButtonVisibility.OpenAsWorkspaceInNewWindow%",
 							"%itemButtonVisibility.Pin%",
-							"%itemButtonVisibility.Favorite%"],
+							"%itemButtonVisibility.Favorite%"]
 					},
 					"default": ["Pin", "Favorite"],
 					"markdownDescription": "%itemButtonVisibility%",
 					"uniqueItems": true
+				},
+				"romly-path-maker.maxDirectories":
+				{
+					"type": "number",
+					"default": 5,
+					"markdownDescription": "%maxDirectories%"
+				},
+				"romly-path-maker.maxFiles":
+				{
+					"type": "number",
+					"default": 5,
+					"markdownDescription": "%maxFiles%"
+				},
+				"romly-path-maker.maxDirectoriesAndFiles":
+				{
+					"type": "number",
+					"default": 10,
+					"markdownDescription": "%maxDirectoriesAndFiles%"
+				},
+				"romly-path-maker.actionOrder": {
+					"type": "array",
+					"items": {
+						"type": "string",
+						"enum": ["copy", "edit", "delete", "rename"]
+					},
+					"uniqueItems": true,
+					"default": ["copy", "edit", "delete", "rename"],
+					"description": "アクションの表示順序"
+				},
+				"myExtension.actionSettings": {
+					"type": "object",
+					"properties": {
+						"copy": {
+							"type": "object",
+							"properties": {
+								"label": {"type": "string", "default": "コピー"},
+								"enabled": {"type": "boolean", "default": true}
+							}
+						},
+						"edit": {
+							"type": "object",
+							"properties": {
+								"label": {"type": "string", "default": "編集"},
+								"enabled": {"type": "boolean", "default": true}
+							}
+						},
+						"delete": {
+							"type": "object",
+							"properties": {
+								"label": {"type": "string", "default": "削除"},
+								"enabled": {"type": "boolean", "default": true}
+							}
+						},
+						"rename": {
+							"type": "object",
+							"properties": {
+								"label": {"type": "string", "default": "名前変更"},
+								"enabled": {"type": "boolean", "default": true}
+							}
+						}
+					},
+					"description": "各アクションの詳細設定"
 				}
 			}
 		}
