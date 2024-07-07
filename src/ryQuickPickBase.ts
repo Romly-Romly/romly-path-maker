@@ -45,16 +45,20 @@ export function maskUserNameDirectory(pathString: string): string
 	// ユーザー名に含まれる正規表現のメタ文字をエスケープする処理
 	function escapeRegExp(s: string)
 	{
-		return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $&はマッチした全文字列を意味する
+		return s.replace(/[.*+?^${}()/|[\]\\]/g, '\\$&'); // $&はマッチした全文字列を意味する
 	}
 
 	if (RyConfiguration.getHideUserName())
 	{
+		// ユーザー名の代わりに表示されるべき文字列
+		const alternative = RyConfiguration.getHiddenUserNameAlternative();
+
 		const username = path.basename(os.homedir());
 		const escapedUsername = escapeRegExp(username);
 		const escapedSep = escapeRegExp(path.sep);
-		const regex = new RegExp(`${escapedSep}${escapedUsername}(${escapedSep}|$)`, 'g');
-		return pathString.replace(regex, `${path.sep}<username>$1`);
+		const pattern = `(${escapedSep}|^)${escapedUsername}(${escapedSep}|$)`;
+		const regex = new RegExp(pattern, 'gm');
+		return pathString.replace(regex, `$1${alternative}$2`);
 	}
 	else
 	{
@@ -288,7 +292,7 @@ export abstract class RyQuickPickBase
 		return '';
 	}
 
-	protected abstract updateItems(): void;
+	protected abstract createItems(): vscode.QuickPickItem[];
 
 	protected getButtons(): vscode.QuickInputButton[]
 	{
@@ -301,9 +305,9 @@ export abstract class RyQuickPickBase
 	public readonly updateList = () =>
 	{
 		this._theQuickPick.placeholder = this.placeholderText;
-		this.updateItems();
+		this._theQuickPick.items = this.createItems();
 		this._theQuickPick.buttons = this.getButtons();
-	}
+	};
 
 	get showHiddenFiles(): boolean
 	{
@@ -411,8 +415,17 @@ export abstract class RyQuickPickItem implements vscode.QuickPickItem
 	{
 	}
 
+	public addButton(button: ryutils.RyQPItemButton): void
+	{
+		this.buttons.push(button);
+	}
+
 	onButtonClick(button: ryutils.RyQuickPickButton): void
 	{
+		if (button instanceof ryutils.RyQPItemButton)
+		{
+			button.onClick();
+		}
 	}
 }
 
@@ -500,26 +513,36 @@ export class RyPath
 	}
 
 	/**
-	 * このパスから実際に挿入される文字列。
+	 * このパスから実際に挿入されるパス文字列。相対パスになってたりする。
 	 */
-	public get insertPath(): string
+	public get rawInsertPath(): string
 	{
 		if (RyConfiguration.getPathPresentation() === 'relative')
 		{
 			const baseDir = RyConfiguration.getBaseDirectory();
 			const relativePath = getRelativeOrAbsolutePath(baseDir, this._fullPath);
 
-			return `'${relativePath}'`;
+			return relativePath;
 		}
 		else
 		{
-			return `'${this._fullPath}'`;
+			return this._fullPath;
 		}
+	}
+
+	/**
+	 * パス文字列を挿入するために引用符で囲む。
+	 * @param aPath
+	 * @returns
+	 */
+	public static quotePath(aPath: string): string
+	{
+		return "'" + aPath + "'";
 	}
 
 	public copyToClipboard(): void
 	{
-		ryutils.copyTextToClipboard(this.insertPath);
+		ryutils.copyTextToClipboard(RyPath.quotePath(this.rawInsertPath));
 
 		// 履歴に追加
 		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
@@ -527,7 +550,7 @@ export class RyPath
 
 	public insertToEditor(): void
 	{
-		ryutils.insertTextToEdtior(this.insertPath);
+		ryutils.insertTextToEdtior(RyPath.quotePath(this.rawInsertPath));
 
 		// 履歴に追加
 		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
@@ -535,7 +558,7 @@ export class RyPath
 
 	public insertToTerminal(): void
 	{
-		ryutils.sendTextToTerminal(this.insertPath);
+		ryutils.sendTextToTerminal(RyPath.quotePath(this.rawInsertPath));
 
 		// 履歴に追加
 		RyConfiguration.addToTheList(this.fullPath, RyListType.history, RyConfiguration.MAX_HISTORY_SIZE);
@@ -626,11 +649,21 @@ export class RyPath
 	 * @param other
 	 * @returns
 	 */
-	public equals(other: RyPath): boolean
+	public equals(other: RyPath | string): boolean
 	{
-		// コンストラクタで normalize してるハズなので単純に比較。
 		let path1 = this._fullPath;
-		let path2 = other.fullPath;
+		let path2: string;
+		if (other instanceof RyPath)
+		{
+			// コンストラクタで normalize してるハズなので単純に比較。
+			path2 = other.fullPath;
+		}
+		else
+		{
+			path2 = other;
+		}
+
+		// Windowsでは大文字と小文字を区別しないよう小文字に変換してから比較する。
 		const isWindows = os.platform() === 'win32';
 		if (isWindows)
 		{
@@ -884,6 +917,10 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 			this._ownerQuickPick.dispose();
 			this._path.openAsWorkspace(true);
 		}
+		else
+		{
+			super.onButtonClick(button);
+		}
 	}
 
 	/**
@@ -941,11 +978,11 @@ export class RyValidPathQPItem extends RyPathQPItem
 		if (aPath.type === MyFileType.directory)
 		{
 			const nameOnly = isGoToParent ? '..' : aPath.filenameOnly;
-			this.description = maskUserNameDirectory(this._path.insertPath === nameOnly ? '' : this._path.insertPath);
+			this.description = RyPath.quotePath(maskUserNameDirectory(this._path.rawInsertPath === nameOnly ? '' : this._path.rawInsertPath));
 		}
 		else
 		{
-			this.description = maskUserNameDirectory(this._path.insertPath === aPath.filenameOnly ? '' : this._path.insertPath);
+			this.description = RyPath.quotePath(maskUserNameDirectory(this._path.rawInsertPath === aPath.filenameOnly ? '' : this._path.rawInsertPath));
 		}
 
 		this.addPinAndFavoriteButton();
@@ -1054,11 +1091,11 @@ export class RyErrorPathQPItem extends RyPathQPItem
 	constructor(aQuickPick: RyQuickPickBase, aFileInfo: RyPath)
 	{
 		const icon = aFileInfo.type === MyFileType.notFound ? 'question' : 'error';
-		const label = `\$(${icon}) ` + path.basename(aFileInfo.fullPath);
+		const label = `\$(${icon}) ` + maskUserNameDirectory(path.basename(aFileInfo.fullPath));
 		super(aQuickPick, aFileInfo, label);
 
 		// description にはフルパスを表示
-		this.description = aFileInfo.fullPath;
+		this.description = maskUserNameDirectory(aFileInfo.fullPath);
 
 		// 見付からないだけのものはピン留め、お気に入りできるけどエラーはだめ。
 		if (aFileInfo.type !== MyFileType.error)

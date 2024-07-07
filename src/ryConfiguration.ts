@@ -133,6 +133,16 @@ export class RyConfiguration
 		return config.get<boolean>(CONFIG_KEY_HIDE_USERNAME) ?? false;
 	}
 
+	/**
+	 * `getHideUserName`が`true`の時にユーザー名の代わりに表示されるべき文字列を取得する。
+	 * @returns
+	 */
+	public static getHiddenUserNameAlternative(): string
+	{
+		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+		return config.get<string>('hiddenUserNameAlternative') ?? '<username>';
+	}
+
 	public static getShowHiddenFiles(): boolean
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
@@ -215,7 +225,7 @@ export class RyConfiguration
 			if (typeof path !== 'string')
 			{
 				// 正しい型になっていないものはスキップ
-				continue
+				continue;
 			}
 
 			let addedTimestamp;
@@ -244,11 +254,14 @@ export class RyConfiguration
 		return validatedList;
 	}
 
-	private static saveList(listKey: string, theList: RyPathListItem[]): Thenable<void>
+	public static saveList(listKey: RyListType, theList: RyPathListItem[]): Thenable<void>
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 
-		const saveList = theList.map(item => { return { path: item.path, added: new Date(item.added).toISOString() }});
+		const saveList = theList.map(item =>
+		{
+			return { path: item.path, added: new Date(item.added).toISOString() };
+		});
 
 		return config.update(listKey, saveList, vscode.ConfigurationTarget.Global);
 	}

@@ -317,6 +317,55 @@ export interface RyQuickPickButton extends vscode.QuickInputButton
 
 
 /**
+ * さらにボタンクリック時の処理を書けるようにしたボタンクラス。
+ * 便宜上IDを持ってるけど使ってない。
+ * 2024/07/07
+ */
+export class RyQPItemButton implements RyQuickPickButton
+{
+	private readonly _ownerItem: vscode.QuickPickItem;
+	id: string;
+	iconPath: vscode.Uri | vscode.ThemeIcon | {dark: vscode.Uri, light: vscode.Uri};
+	tooltip?: string;
+
+	constructor(aOwner: vscode.QuickPickItem, aIcon: vscode.ThemeIcon, aTooltip: string = '')
+	{
+		this._ownerItem = aOwner;
+		this.id = '';
+		this.iconPath = aIcon;
+		this.tooltip = aTooltip;
+	}
+
+	public onClick(): void
+	{
+	}
+
+	public get ownerItem(): vscode.QuickPickItem
+	{
+		return this._ownerItem;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
  * エラーを `vscode.window.showErrorMessage` で表示し、ユーザーの要求に応じて詳細を表示する。
  * @param errorMessage `vscode.window.showErrorMessage` で表示するエラーメッセージ。
  * @param extensionName 詳細を表示する時に出力チャンネルを識別するための拡張機能の名前。 `createOutputChannel` で使用する。

@@ -161,7 +161,7 @@ export class InputPathQuickPick extends RyQuickPickBase
 		const inputPath = this._theQuickPick.value;
 		if (ryutils.endsWithPathSeparator(inputPath))
 		{
-			this.updateItems();
+			this._theQuickPick.items = this.createItems();
 		}
 	}
 
@@ -184,7 +184,7 @@ export class InputPathQuickPick extends RyQuickPickBase
 	/**
 	 * 表示するアイテムのリストを作成する。
 	 */
-	protected override updateItems(): void
+	protected override createItems(): vscode.QuickPickItem[]
 	{
 		const items: vscode.QuickPickItem[] = [];
 
@@ -205,7 +205,7 @@ export class InputPathQuickPick extends RyQuickPickBase
 		}
 
 		items.push(new RyBackToBrowseModeQPItem(this, this._backDirectory));
-		this._theQuickPick.items = items;
+		return items;
 	}
 
 	public override showDirectory(directory: RyPath): void

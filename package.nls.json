@@ -19,6 +19,7 @@
 	"defaultAction.terminal": "Insert file path to active terminal.",
 	"defaultAction.reveal": "Reveal file in the File Explorer or Finder.",
 	"hideUserName": "Mask the directory name of the user name in the pathes.",
+	"hiddenUserNameAlternative": "The text shown when `hideUserName` is set to `true`.",
 	"pinnedList": "**You don't have to set this. It's used internally.** List of files/directories that are pinned. Delete this value if you want to clear all the pinned list.",
 	"favoriteList": "**You don't have to set this. It's used internally.** List of files/directories that are favorite. Delete this value if you want to clear all the favorite list.",
 	"recentList": "**You don't have to set this. It's used internally.** List of recently used files/directories. Delete this value if you want to clear all history.",

@@ -112,7 +112,7 @@ export class MyQuickPick extends RyQuickPickBase
 			{
 				truncatedItems: [],
 				showRemainingItem: new RyShowRemainingDirectoriesQPItem(this, type)
-			}
+			};
 		}
 
 		const files = listFilesAndHandleError(directory);
@@ -516,16 +516,16 @@ export class MyQuickPick extends RyQuickPickBase
 		];
 	}
 
-	protected override updateItems(): void
+	protected override createItems(): vscode.QuickPickItem[]
 	{
 		const files = listFilesAndHandleError(this._path);
 		if (files)
 		{
-			this._theQuickPick.items = this.createQuickPickItems(files);
+			return this.createQuickPickItems(files);
 		}
 		else
 		{
-			this._theQuickPick.items = [];
+			return [];
 		}
 	}
 
@@ -949,7 +949,7 @@ class MyQuickPickRevealInExprolerItem extends RyQuickPickItem
  */
 export class RyCertainListQuickPick extends RyQuickPickBase
 {
-	private _listType: RyListType;
+	private readonly _listType: RyListType;
 	private _numItems: number = 0;
 
 	constructor(listType: RyListType)
@@ -987,7 +987,7 @@ export class RyCertainListQuickPick extends RyQuickPickBase
 			const fileOnly = items.filter(item => item.path.type === MyFileType.file);
 
 			// まずディレクトリ
-			const quickPickItems: vscode.QuickPickItem[] = []
+			const quickPickItems: vscode.QuickPickItem[] = [];
 			quickPickItems.push({ label: i18nPlural(COMMON_TEXTS.directories, dirOnly.length), kind: vscode.QuickPickItemKind.Separator });
 			quickPickItems.push(...dirOnly);
 
@@ -1007,7 +1007,7 @@ export class RyCertainListQuickPick extends RyQuickPickBase
 		return MyQuickPick.makePlaceholderText();
 	}
 
-	protected override updateItems(): void
+	protected override createItems(): vscode.QuickPickItem[]
 	{
 		this._numItems = 0;
 
@@ -1024,7 +1024,33 @@ export class RyCertainListQuickPick extends RyQuickPickBase
 			list.map(item => item.path),
 			false,
 			(item, index) => this._numItems++);
-		this._theQuickPick.items = RyCertainListQuickPick.separatePathItemsIfNeeded(pathItems);
+
+		const items = RyCertainListQuickPick.separatePathItemsIfNeeded(pathItems);
+
+		// お気に入りリストの場合、ディレクトリとファイルを分けない時は並び替えや削除ボタンを有効にする。
+		if (!RyConfiguration.getGroupDirectories() && this._listType === RyListType.favorite)
+		{
+			items.forEach((item, index) =>
+			{
+				if (item instanceof RyValidPathQPItem)
+				{
+					// 上への移動ボタンは先頭には追加しない
+					if (index > 0)
+					{
+						item.addButton(new RyCertainListQPItemButtonMove(item, true, this._listType));
+					}
+
+					// 下への移動ボタンは末尾には追加しない
+					if (index < items.length - 1)
+					{
+						item.addButton(new RyCertainListQPItemButtonMove(item, false, this._listType));
+					}
+				}
+				return item;
+			});
+		}
+
+		return items;
 	}
 
 	protected override getButtons(): vscode.QuickInputButton[]
@@ -1095,5 +1121,84 @@ export class RyCertainListQuickPick extends RyQuickPickBase
 	public get numItems(): number
 	{
 		return this._numItems;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * リストからパスを削除するボタン
+ * 2024/07/07
+ */
+class RyCertainListQPItemButtonMove extends ryutils.RyQPItemButton
+{
+	private readonly _moveUp: boolean;
+
+	private readonly _targetPath: RyPath;
+
+	private readonly _listType: RyListType;
+
+	constructor(owner: RyValidPathQPItem, moveUp: boolean, aListType: RyListType)
+	{
+		super(owner, new vscode.ThemeIcon(moveUp ? 'chevron-up' : 'chevron-down'));
+		this._moveUp = moveUp;
+		this._targetPath = owner.path;
+		this._listType = aListType;
+	}
+
+	public override onClick(): void
+	{
+		// 設定からリストを読み込み
+		const list = RyConfiguration.getList(this._listType);
+
+		const index = list.findIndex(item => this._targetPath.equals(item.path));
+		if (index >= 0)
+		{
+			let changed = false;
+
+			const item = list.splice(index, 1)[0];
+			if (this._moveUp)
+			{
+				// 一つ上に移動
+				if (index > 1)
+				{
+					list.splice(index - 1, 0, item);
+					changed = true;
+				}
+			}
+			else
+			{
+				// 1つ下に移動
+				if (index < list.length - 1)
+				{
+					list.splice(index + 1, 0, item);
+					changed = true;
+				}
+			}
+
+			// 保存
+			if (changed)
+			{
+				RyConfiguration.saveList(this._listType, list).then(() =>
+				{
+					// 保存完了したらリストを更新してアクティブにする
+					if (this.ownerItem instanceof RyValidPathQPItem)
+					{
+						if (this.ownerItem._ownerQuickPick instanceof RyCertainListQuickPick)
+						{
+							this.ownerItem._ownerQuickPick.updateList();
+							this.ownerItem._ownerQuickPick.setActiveItem(this._targetPath);
+						}
+					}
+				});
+			}
+		}
 	}
 }

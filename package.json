@@ -2,7 +2,7 @@
 	"name": "romly-path-maker",
 	"displayName": "Romly Path Maker",
 	"description": "コマンドパレット上でディレクトリを探索し、選択したファイルのパスをターミナルに挿入したり、クリップボードにコピーできる拡張機能です。",
-	"version": "1.3.0",
+	"version": "2.0.0",
 	"publisher": "Romly",
 	"engines": {
 		"vscode": "^1.90.0"
@@ -106,6 +106,12 @@
 					"type": "boolean",
 					"default": false,
 					"markdownDescription": "%hideUserName%"
+				},
+				"romly-path-maker.hiddenUserNameAlternative":
+				{
+					"type": "string",
+					"default": "<username>",
+					"markdownDescription": "%hiddenUserNameAlternative%"
 				},
 				"romly-path-maker.pinnedList":
 				{
@@ -214,50 +220,6 @@
 					"type": "number",
 					"default": 10,
 					"markdownDescription": "%maxDirectoriesAndFiles%"
-				},
-				"romly-path-maker.actionOrder": {
-					"type": "array",
-					"items": {
-						"type": "string",
-						"enum": ["copy", "edit", "delete", "rename"]
-					},
-					"uniqueItems": true,
-					"default": ["copy", "edit", "delete", "rename"],
-					"description": "アクションの表示順序"
-				},
-				"myExtension.actionSettings": {
-					"type": "object",
-					"properties": {
-						"copy": {
-							"type": "object",
-							"properties": {
-								"label": {"type": "string", "default": "コピー"},
-								"enabled": {"type": "boolean", "default": true}
-							}
-						},
-						"edit": {
-							"type": "object",
-							"properties": {
-								"label": {"type": "string", "default": "編集"},
-								"enabled": {"type": "boolean", "default": true}
-							}
-						},
-						"delete": {
-							"type": "object",
-							"properties": {
-								"label": {"type": "string", "default": "削除"},
-								"enabled": {"type": "boolean", "default": true}
-							}
-						},
-						"rename": {
-							"type": "object",
-							"properties": {
-								"label": {"type": "string", "default": "名前変更"},
-								"enabled": {"type": "boolean", "default": true}
-							}
-						}
-					},
-					"description": "各アクションの詳細設定"
 				}
 			}
 		}

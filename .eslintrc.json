@@ -1,31 +1,33 @@
 {
-    "root": true,
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": 6,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "@typescript-eslint"
-    ],
-    "rules": {
-        "@typescript-eslint/naming-convention": [
-            "warn",
-            {
-                "selector": "import",
-                "format": [ "camelCase", "PascalCase" ]
-            }
-        ],
-        "@typescript-eslint/semi": "warn",
-        "curly": "warn",
-        "eqeqeq": "warn",
-        "no-throw-literal": "warn",
-        "semi": "off",
-        "brace-style": ["warn", "allman"]
-    },
-    "ignorePatterns": [
-        "out",
-        "dist",
-        "**/*.d.ts"
-    ]
+	"root": true,
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": 6,
+		"sourceType": "module",
+		"project": "./tsconfig.json"
+	},
+	"plugins": [
+		"@typescript-eslint"
+	],
+	"rules": {
+		"@typescript-eslint/naming-convention": [
+			"warn",
+			{
+				"selector": "import",
+				"format": [ "camelCase", "PascalCase" ]
+			}
+		],
+		"@typescript-eslint/semi": "warn",
+		"@typescript-eslint/switch-exhaustiveness-check": "error",
+		"curly": "warn",
+		"eqeqeq": "warn",
+		"no-throw-literal": "warn",
+		"semi": "off",
+		"brace-style": ["warn", "allman"]
+	},
+	"ignorePatterns": [
+		"out",
+		"dist",
+		"**/*.d.ts"
+	]
 }

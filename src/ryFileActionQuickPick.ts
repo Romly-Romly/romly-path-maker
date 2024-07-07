@@ -113,12 +113,7 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 		return i18n(MESSAGES.actionToTheFile, { filename: this._path.filenameOnly });
 	}
 
-	protected override updateItems(): void
-	{
-		this._theQuickPick.items = this.createQuickPickItems();
-	}
-
-	private createQuickPickItems(): vscode.QuickPickItem[]
+	protected override createItems(): vscode.QuickPickItem[]
 	{
 		const items: vscode.QuickPickItem[] = [];
 

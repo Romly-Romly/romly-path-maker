@@ -4,7 +4,7 @@
 
 [English is here](#english英語)
 
-### [unreleased]
+### [2.0.0] - 2024-07-07
 
 #### 追加
 - ファイルを選択した時に操作メニューを表示する機能を追加し、それをディフォルトの動作にした。
@@ -15,12 +15,14 @@
 - お気に入り機能を追加。アイテムの☆ボタンでお気に入りに登録できます。お気に入りは `Romly: Path-Maker - Favorites` で呼び出せるようになります。
 - 履歴機能を追加。使用したパスは自動的に保存され、 `Romly: Path-Maker - History` で呼び出せるようになりました。
 - ファイル／ディレクトリの数を表示するようにした。
+- ディレクトリ／ファイルを表示する最大数を設定できるようにした。
 - 「このディレクトリをエクスプローラーで開く」コマンドを追加。
 - 「パスを入力して移動」から元のディレクトリに戻れるようにした。
 
 #### 変更
 - 上の階層へ戻るアイテムのアイコンをフォルダから矢印に変更しました。
 - 「パスを入力して移動」でディレクトリが見付からない場合はエラーを表示するようにした。
+- ユーザー名ディレクトリを隠す時の代替文字列を指定できるようにした。
 
 ### [1.2.2] - 2024-06-29
 
@@ -77,10 +79,9 @@
 
 [日本語(Japanese)はこちら](#日本語japanese)
 
-### [unreleased]
+### [2.0.0] - 2024-07-07
 
 #### Added
-
 - Added a feature to display an action menu when a file is selected, and made this the default behavior.
 - Added a feature to switch between absolute path and relative path.
 - Now displaying directories along the path from the base directory.
@@ -89,13 +90,14 @@
 - Added the favorite list. You can add items to favorites using the ☆ button. Favorites can be accessed via `Romly: Path-Maker - Favorites`.
 - Added history feature. Used paths are now automatically saved and can be recalled using `Romly: Path-Maker - History`.
 - Display the number of files/directories.
+- Implemented a feature to set the max number of directories/files to display.
 - Added "Open this directory in Explorer" command.
 - Now it's possible to return to the directory where you were from "Enter path to move".
 
 #### Changed
-
 - Changed the icon for the item to go up from a folder to an arrow.
 - Now displaying an error message when a directory is not found using "Go to input path".
+- Added the ability to specify an alternative string when hiding the username in paths.
 
 ### [1.2.2] - 2024-06-29
 
