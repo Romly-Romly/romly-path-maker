@@ -15,6 +15,45 @@
 			{
 				"selector": "import",
 				"format": [ "camelCase", "PascalCase" ]
+			},
+			{
+				"selector": "variable",
+				"format": ["camelCase", "UPPER_CASE"]
+			},
+			{
+				"selector": "function",
+				"format": ["camelCase"]
+			},
+			{
+				"selector": "enum",
+				"format": ["PascalCase"]
+			},
+			{
+				"selector": "interface",
+				"format": ["PascalCase"],
+				"prefix": ["I"]
+			},
+			{
+				"selector": "typeAlias",
+				"format": ["PascalCase"]
+			},
+			{
+				"selector": "property",
+				"modifiers": ["private"],
+				"format": ["camelCase"],
+				"leadingUnderscore": "require"
+			},
+			{
+				"selector": "property",
+				"modifiers": ["private", "readonly", "static"],
+				"format": ["UPPER_CASE"],
+				"leadingUnderscore": "allow"
+			},
+			{
+				"selector": "method",
+				"modifiers": ["private"],
+				"format": ["camelCase"],
+				"leadingUnderscore": "allow"
 			}
 		],
 		"@typescript-eslint/semi": "warn",

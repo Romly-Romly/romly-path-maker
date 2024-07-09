@@ -61,7 +61,7 @@ export enum RyListType
  * お気に入りやピン留めの各項目の形式。
  * 2024/07/05
  */
-export interface RyPathListItem
+export interface IRyPathListItem
 {
 	path: string;
 
@@ -196,7 +196,7 @@ export class RyConfiguration
 	 * @param list リストの種類を指定。
 	 * @returns
 	 */
-	public static getList(list: RyListType): RyPathListItem[]
+	public static getList(list: RyListType): IRyPathListItem[]
 	{
 		const rawList = vscode.workspace.getConfiguration(CONFIGURATION_NAME).get<any[]>(list);
 
@@ -206,7 +206,7 @@ export class RyConfiguration
 			return [];
 		}
 
-		const validatedList: RyPathListItem[] = [];
+		const validatedList: IRyPathListItem[] = [];
 		for (const item of rawList)
 		{
 			if (item === null)
@@ -254,7 +254,7 @@ export class RyConfiguration
 		return validatedList;
 	}
 
-	public static saveList(listKey: RyListType, theList: RyPathListItem[]): Thenable<void>
+	public static saveList(listKey: RyListType, theList: IRyPathListItem[]): Thenable<void>
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 

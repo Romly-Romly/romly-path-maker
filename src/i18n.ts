@@ -21,7 +21,7 @@ type Cardinal = 'zero' /* zero form */ | 'two' /*双数形(dual)*/ | 'few' /*少
  * 必要に応じて複数形を保持できる文字列。
  * 基本的な複数形のみは必須。
  */
-interface PluralRule
+interface IPluralRule
 {
 	// 基本的な複数形、またはルールに当てはまらないすべての数の場合の文字列
 	other: string;
@@ -36,9 +36,9 @@ interface PluralRule
  */
 export interface I18NPluralText
 {
-	ja: PluralRule;
-	en: PluralRule;
-	[key: string]: PluralRule;
+	ja: IPluralRule;
+	en: IPluralRule;
+	[key: string]: IPluralRule;
 }
 
 

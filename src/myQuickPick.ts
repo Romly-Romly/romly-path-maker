@@ -81,7 +81,7 @@ function listFilesAndHandleError(directory: RyPath): ListFilesResult
 
 
 
-interface TruncatedSet
+interface ITruncatedSet
 {
 	truncatedItems: RyPathQPItem[];
 	showRemainingItem: RyShowRemainingDirectoriesQPItem;
@@ -96,8 +96,8 @@ export class MyQuickPick extends RyQuickPickBase
 	// 現在表示しているディレクトリ
 	private readonly _path: RyPath;
 
-	// RyPathItemsType の各値に対する Record<RyPathItemsType, TruncatedSet> のセット
-	private readonly _truncatedSets: Record<RyPathItemsType, TruncatedSet>;
+	// RyPathItemsType の各値に対する Record<RyPathItemsType, ITruncatedSet> のセット
+	private readonly _truncatedSets: Record<RyPathItemsType, ITruncatedSet>;
 
 	constructor(directory: RyPath)
 	{
@@ -105,7 +105,7 @@ export class MyQuickPick extends RyQuickPickBase
 		this._path = directory;
 
 		// ファイルとディレクトリの表示数制限用のセットを初期化
-		this._truncatedSets = {} as Record<RyPathItemsType, TruncatedSet>;
+		this._truncatedSets = {} as Record<RyPathItemsType, ITruncatedSet>;
 		for (const type of Object.values(RyPathItemsType))
 		{
 			this._truncatedSets[type] =
@@ -892,7 +892,7 @@ class RyOpenAsWorkspaceCommandQPItem extends RyQuickPickItem
 		super(aQuickPick);
 		this._newWindow = newWindow;
 		const icon = newWindow ? 'empty-window' : 'window';
-		const msg = newWindow ? MESSAGES.openInAppCommandLabel : MESSAGES.openDirectoryAsWorkspaceInNewWindow;
+		const msg = newWindow ? MESSAGES.openDirectoryAsWorkspaceInNewWindow : MESSAGES.openInAppCommandLabel;
 		this.label = `${COMMAND_LABEL_PREFIX} \$(${icon}) ` + i18n(msg, { app: 'VS Code' });
 		this._path = aQuickPick.path;
 	}

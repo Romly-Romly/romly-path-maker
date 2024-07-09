@@ -152,9 +152,9 @@ export class ListFilesResult
 export abstract class RyQuickPickBase
 {
 	//　内部で使用しているQuickPickのボタンの識別子。文字列は識別のみなので何でもおけ。
-	private readonly BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
-	private readonly BUTTON_ID_TOGGLE_PATH_PRESENTATION = 'togglePathPresentation';
-	private readonly BUTTON_ID_TOGGLE_GROUP_DIRECTORIES = 'toggle_group_directories';
+	private static readonly BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES = 'toggle_show_hidden_files';
+	private static readonly BUTTON_ID_TOGGLE_PATH_PRESENTATION = 'togglePathPresentation';
+	private static readonly BUTTON_ID_TOGGLE_GROUP_DIRECTORIES = 'toggle_group_directories';
 
 	protected readonly _theQuickPick: vscode.QuickPick<vscode.QuickPickItem>;
 
@@ -165,18 +165,18 @@ export abstract class RyQuickPickBase
 		// QuickPick のボタン押下時の処理
 		this._theQuickPick.onDidTriggerButton((button) =>
 		{
-			const buttonId = (button as ryutils.RyQuickPickButton).id;
-			if (buttonId === this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES)
+			const buttonId = (button as ryutils.IRyQuickPickButton).id;
+			if (buttonId === RyQuickPickBase.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES)
 			{
 				// 隠しファイルの表示設定を切り替える
 				this.showHiddenFiles = !this.showHiddenFiles;
 			}
-			else if (buttonId === this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES)
+			else if (buttonId === RyQuickPickBase.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES)
 			{
 				// ディレクトリのグループ表示設定を切り替える
 				this.toggleGroupDirectories();
 			}
-			else if (buttonId === this.BUTTON_ID_TOGGLE_PATH_PRESENTATION)
+			else if (buttonId === RyQuickPickBase.BUTTON_ID_TOGGLE_PATH_PRESENTATION)
 			{
 				// パスの表示形式を切り替える
 				this.setPathPresentation(this.getPathPresentation() === 'relative' ? 'absolute' : 'relative');
@@ -203,7 +203,7 @@ export abstract class RyQuickPickBase
 	{
 		if (e.item instanceof RyQuickPickItem)
 		{
-			const button = e.button as ryutils.RyQuickPickButton;
+			const button = e.button as ryutils.IRyQuickPickButton;
 			e.item.onButtonClick(button);
 		}
 	}
@@ -217,25 +217,25 @@ export abstract class RyQuickPickBase
 		});
 	}
 
-	protected createToggleGroupDirectoriesButton(): ryutils.RyQuickPickButton
+	protected createToggleGroupDirectoriesButton(): ryutils.IRyQuickPickButton
 	{
 		return RyConfiguration.getGroupDirectories() ?
-			{ id: this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(MESSAGES['tooltip.ungroupDirectories']) } :
-			{ id: this.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(MESSAGES['tooltip.groupDirectories']) };
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder'), tooltip: i18n(MESSAGES['tooltip.ungroupDirectories']) } :
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_GROUP_DIRECTORIES, iconPath: new vscode.ThemeIcon('folder-library'), tooltip: i18n(MESSAGES['tooltip.groupDirectories']) };
 	}
 
-	protected createShowHiddenFilesButton(): ryutils.RyQuickPickButton
+	protected createShowHiddenFilesButton(): ryutils.IRyQuickPickButton
 	{
 		return RyConfiguration.getShowHiddenFiles() ?
-			{ id: this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(MESSAGES['tooltip.hideHiddenFiles']) } :
-			{ id: this.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(MESSAGES['tooltip.showHiddenFiles']) };
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye'), tooltip: i18n(MESSAGES['tooltip.hideHiddenFiles']) } :
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_SHOW_HIDDEN_FILES, iconPath: new vscode.ThemeIcon('eye-closed'), tooltip: i18n(MESSAGES['tooltip.showHiddenFiles']) };
 	}
 
-	protected createTogglePathPresentationButton(): ryutils.RyQuickPickButton
+	protected createTogglePathPresentationButton(): ryutils.IRyQuickPickButton
 	{
 		return RyConfiguration.getPathPresentation() === 'absolute' ?
-			{ id: this.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-tree'), tooltip: i18n(MESSAGES['tooltip.absolutePathMode']) } :
-			{ id: this.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-flat'), tooltip: i18n(MESSAGES['tooltip.relativePathMode']) };
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-tree'), tooltip: i18n(MESSAGES['tooltip.absolutePathMode']) } :
+			{ id: RyQuickPickBase.BUTTON_ID_TOGGLE_PATH_PRESENTATION, iconPath: new vscode.ThemeIcon('list-flat'), tooltip: i18n(MESSAGES['tooltip.relativePathMode']) };
 	}
 
 	/**
@@ -390,7 +390,7 @@ export abstract class RyQuickPickItem implements vscode.QuickPickItem
 	description: string;
 	detail: string | undefined = undefined;
 	alwaysShow: boolean = false;
-	buttons: ryutils.RyQuickPickButton[];
+	buttons: ryutils.IRyQuickPickButton[];
 
 	// 自身が所属する QuickPick への参照を持つ
 	_ownerQuickPick: RyQuickPickBase;
@@ -420,7 +420,7 @@ export abstract class RyQuickPickItem implements vscode.QuickPickItem
 		this.buttons.push(button);
 	}
 
-	onButtonClick(button: ryutils.RyQuickPickButton): void
+	onButtonClick(button: ryutils.IRyQuickPickButton): void
 	{
 		if (button instanceof ryutils.RyQPItemButton)
 		{
@@ -861,7 +861,7 @@ export abstract class RyPathQPItem extends RyQuickPickItem
 		return '   '.repeat(indent);
 	}
 
-	override onButtonClick(button: ryutils.RyQuickPickButton): void
+	override onButtonClick(button: ryutils.IRyQuickPickButton): void
 	{
 		if (button.id === RyPathQPItem.ButtonId.copy)
 		{
@@ -1051,8 +1051,8 @@ export class RyValidPathQPItem extends RyPathQPItem
 		{
 			case 'Menu':
 				// 循環参照を避けるためにここでインポートしてる
-				const { RyFileActionQuickPick, PreviousQuickPickType } = require('./ryFileActionQuickPick');
-				new RyFileActionQuickPick(this._path, { type: PreviousQuickPickType.browser, path: this._path, wasQuickAccess: this.isPinnedItem }).show();
+				const ryFileActionQuickPick = require('./ryFileActionQuickPick');
+				new ryFileActionQuickPick.RyFileActionQuickPick(this._path, { type: ryFileActionQuickPick.PreviousQuickPickType.browser, path: this._path, wasQuickAccess: this.isPinnedItem }).show();
 				break;
 			case 'Open':
 				this._path.openInEditor();

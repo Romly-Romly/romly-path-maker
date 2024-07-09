@@ -302,7 +302,7 @@ export function getActiveEditorDirectory(): string | undefined
  * 拡張したQuickPickItemのボタン。
  * @property id ボタンの識別子として使う文字列。
  */
-export interface RyQuickPickButton extends vscode.QuickInputButton
+export interface IRyQuickPickButton extends vscode.QuickInputButton
 {
 	id: string;
 }
@@ -321,7 +321,7 @@ export interface RyQuickPickButton extends vscode.QuickInputButton
  * 便宜上IDを持ってるけど使ってない。
  * 2024/07/07
  */
-export class RyQPItemButton implements RyQuickPickButton
+export class RyQPItemButton implements IRyQuickPickButton
 {
 	private readonly _ownerItem: vscode.QuickPickItem;
 	id: string;

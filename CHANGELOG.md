@@ -4,6 +4,11 @@
 
 [English is here](#english英語)
 
+### [unreleased]
+
+#### 修正
+- 「ディレクトリをVS Codeで開く」と「このディレクトリを新しいウインドウで開く」が逆になっていた不具合を修正。
+
 ### [2.0.0] - 2024-07-07
 
 #### 追加
@@ -78,6 +83,11 @@
 ## English(英語)
 
 [日本語(Japanese)はこちら](#日本語japanese)
+
+### [unreleased]
+
+#### Fixed
+- "Open this directory in VS Code" と "Open this directory in new window" が逆になっていた不具合を修正。
 
 ### [2.0.0] - 2024-07-07
 
