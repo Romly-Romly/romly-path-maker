@@ -129,6 +129,12 @@ class ProjectMessages
 		en: 'Go to user directory',
 	};
 
+	absolutePathMode: I18NText =
+	{
+		ja: '絶対パスモード',
+		en: 'Absolute Path Mode',
+	};
+
 	baseDirectory: I18NText =
 	{
 		ja: '基準ディレクトリ',

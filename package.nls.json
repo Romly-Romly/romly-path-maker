@@ -1,6 +1,8 @@
 {
 	"commandTitle.favorites": "Path Maker - Favorites",
 	"commandTitle.history": "Path Maker - History",
+	"commandTitle.workspace": "Path Maker - Show Workspace Directory",
+
 	"baseDirectory": "**You don't have to set this. It's used internally.** When the base directory set, it will be stored in this value.",
 	"groupDirectories": "Display directories and files separately.",
 	"showDirectoryIcons": "Show directory icons.",
@@ -39,5 +41,6 @@
 	"itemButtonVisibility.Favorite": "Button to add to the favorites",
 	"maxDirectories": "Max number of directories to display. This is to prevent the list from becoming too long. The remaining directories can be viewed by selecting 'Show remaining directories'. Set to 0 to display all directories from the start. This setting is only effective when directories and files are displayed separately.",
 	"maxFiles": "Max number of files to display. This is to prevent the list from becoming too long. The remaining files can be viewed by selecting 'Show remaining files'. Set to 0 to display all files from the start. This setting is only effective when directories and files are displayed separately.",
-	"maxDirectoriesAndFiles": "Max number of directories and files to display. This is to prevent the list from becoming too long. The remaining items can be viewed by selecting 'Show remaining items'. Set to 0 to display all items from the start. This setting is only effective when directories and files are displayed together."
+	"maxDirectoriesAndFiles": "Max number of directories and files to display. This is to prevent the list from becoming too long. The remaining items can be viewed by selecting 'Show remaining items'. Set to 0 to display all items from the start. This setting is only effective when directories and files are displayed together.",
+	"description.ignoreInvalidPaths": "Hide invalid paths (paths that don't exist or have inaccessible file information)."
 }

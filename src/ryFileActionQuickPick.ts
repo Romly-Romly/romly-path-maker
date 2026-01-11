@@ -1,18 +1,19 @@
 import * as vscode from 'vscode';
 
 // 自前の国際化文字列リソースの読み込み
-import { i18n } from "./i18n";
+import * as i18n from "./i18n";
 import { MESSAGES } from "./i18nTexts";
 
 import * as ryutils from './ryutils';
+import { RyPath } from './ryPath';
 import
 {
 	RyQuickPickBase,
 	RyQuickPickItem,
 	maskUserNameDirectory,
-	RyPath,
 	RyPathAction,
 	RyPathActionQPItem,
+	isItemInTheList
 } from './ryQuickPickBase';
 
 import { MyQuickPick, RyCertainListQuickPick } from './myQuickPick';
@@ -59,16 +60,16 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 		constructor(aQuickPick: RyFileActionQuickPick)
 		{
 			super(aQuickPick);
-			this.label = i18n(MESSAGES.goBack);
+			this.label = i18n.t(MESSAGES.goBack);
 		}
 
 		public override didAccept(): void
 		{
 			// 元のディレクトリの表示に戻る
-			const prevState = (this._ownerQuickPick as RyFileActionQuickPick)._previousState;
+			const prevState = (this.ownerQuickPick as RyFileActionQuickPick)._previousState;
 			if (prevState.type === PreviousQuickPickType.browser)
 			{
-				const quickPick = new MyQuickPick(prevState.path.parentPath);
+				const quickPick = new MyQuickPick(prevState.path.parentPath, this.ownerQuickPick.baseDirectory);
 				quickPick.setActivePath(prevState.path, prevState.wasQuickAccess);
 				quickPick.show();
 			}
@@ -89,7 +90,7 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 				}
 				if (listType !== undefined)
 				{
-					const quickPick = new RyCertainListQuickPick(listType);
+					const quickPick = new RyCertainListQuickPick(listType, this.ownerQuickPick.baseDirectory);
 					quickPick.setActiveItem(prevState.path);
 					quickPick.show();
 				}
@@ -97,9 +98,9 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 		}
 	};
 
-	constructor(filePath: RyPath, previousState: PreviousState)
+	constructor(filePath: RyPath, previousState: PreviousState, baseDirectory: string)
 	{
-		super();
+		super(baseDirectory);
 		this._path = filePath;
 		this._previousState = previousState;
 
@@ -110,7 +111,7 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 
 	protected override get placeholderText(): string
 	{
-		return i18n(MESSAGES.actionToTheFile, { filename: this._path.filenameOnly });
+		return i18n.t(MESSAGES.actionToTheFile, { filename: this._path.filenameOnly });
 	}
 
 	protected override createItems(): vscode.QuickPickItem[]
@@ -136,12 +137,12 @@ export class RyFileActionQuickPick extends RyQuickPickBase
 		}
 
 		// お気に入り
-		items.push(this._path.isListed(RyListType.favorite) ?
+		items.push(isItemInTheList(this._path, RyListType.favorite) ?
 			new RyPathActionQPItem(this, this._path, RyPathAction.removeFromFavorite) :
 			new RyPathActionQPItem(this, this._path, RyPathAction.addToFavorite));
 
 		// ピン留め
-		items.push(this._path.isListed(RyListType.pinned) ?
+		items.push(isItemInTheList(this._path, RyListType.pinned) ?
 			new RyPathActionQPItem(this, this._path, RyPathAction.removeFromPinned) :
 			new RyPathActionQPItem(this, this._path, RyPathAction.addToPinned));
 

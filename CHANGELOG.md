@@ -2,14 +2,25 @@
 
 ## 日本語(Japanese)
 
-[English is here](#english英語)
+[English version below](#english英語)
 
-### [unreleased]
+### [2.1.0] - 2026/01/12
+
+#### 追加
+- 常に現在のワークスペースのディレクトリを表示するコマンドを追加。
+- 無効なパスを表示しないようにするオプションを追加。ディフォルトで有効になっています。
+
+#### 変更
+- ファイルアイコンが規程のテーマアイコンで表示されるようになりました。
+- リストの表示を全体的に調整。スッキリして見やすくなりました。
+- コマンドは検索しやすいよう常に英語で表示し、翻訳は右に表示されるようにしました。
+- ライセンスをMPL 2.0に変更。
+- VSCodeの対応バージョンが1.108.0以上になりました。
 
 #### 修正
 - 「ディレクトリをVS Codeで開く」と「このディレクトリを新しいウインドウで開く」が逆になっていた不具合を修正。
 
-### [2.0.0] - 2024-07-07
+### [2.0.0] - 2024/07/07
 
 #### 追加
 - ファイルを選択した時に操作メニューを表示する機能を追加し、それをディフォルトの動作にした。
@@ -29,13 +40,13 @@
 - 「パスを入力して移動」でディレクトリが見付からない場合はエラーを表示するようにした。
 - ユーザー名ディレクトリを隠す時の代替文字列を指定できるようにした。
 
-### [1.2.2] - 2024-06-29
+### [1.2.2] - 2024/06/29
 
 #### 変更
 - ディレクトリに移動するコマンドでdetailに表示されていたパスをdescriptionに表示するよう変更。
 - 「このディレクトリをCodeで開く」を現在のウィンドウで開くよう変更し、新しいウィンドウで開くためのボタンを追加。
 
-### [1.2.1] - 2024-06-27
+### [1.2.1] - 2024/06/27
 
 #### 修正
 - ディレクトリ／ファイル分割表示設定、隠しファイル表示設定が切り替わらない事があるバグを修正。
@@ -45,7 +56,7 @@
 - 編集中のファイルが未保存の時に「編集中のファイルのディレクトリに移動する」コマンドが表示されないよう修正。
 - `hideUserName`設定がtrueの時に一部にユーザー名が含まれるファイル名も隠してしまっていた不具合を修正。
 
-### [1.2.0] - 2024-06-25
+### [1.2.0] - 2024/06/25
 
 #### 追加
 - 基準ディレクトリにジャンプするコマンドを追加。
@@ -57,16 +68,16 @@
 - 表示言語がja/en以外の時にエラーになってしまっていた不具合を修正。
 - ディレクトリとファイルを分けて表示する設定、隠しファイルの表示設定が意図せずワークスペース設定に書き込まれていた不具合を修正。
 
-### [1.1.0] - 2024-06-12
+### [1.1.0] - 2024/06/12
 
 - READMEに英語訳を追加。
 - ディレクトリをVS Codeで開くコマンドを追加。
 
-### [1.0.1] - 2024-06-11
+### [1.0.1] - 2024/06/11
 
 - アイコンを追加。
 
-### [1.0.0] - 2024-06-11
+### [1.0.0] - 2024/06/11
 
 - 初回リリース。
 
@@ -82,14 +93,25 @@
 
 ## English(英語)
 
-[日本語(Japanese)はこちら](#日本語japanese)
+[日本語版(Japanese version above)はこちら](#日本語japanese)
 
-### [unreleased]
+### [2.1.0] - 2026/01/12
+
+#### Added
+- Added command to display always the current workspace directory.
+- Added option to hide invalid paths. Enabled by default.
+
+#### Changed
+- File icons now display using the default theme icons.
+- Overall adjustment to list display. Now cleaner and more readable.
+- Commands are always displayed in English for easier searching, with translations shown on the right.
+- Changed license to MPL 2.0.
+- VS Code compatibility is now version 1.108.0 or higher.
 
 #### Fixed
-- "Open this directory in VS Code" と "Open this directory in new window" が逆になっていた不具合を修正。
+- Fixed bug where "Open this directory in VS Code" and "Open this directory in new window" were reversed.
 
-### [2.0.0] - 2024-07-07
+### [2.0.0] - 2024/07/07
 
 #### Added
 - Added a feature to display an action menu when a file is selected, and made this the default behavior.
@@ -109,13 +131,13 @@
 - Now displaying an error message when a directory is not found using "Go to input path".
 - Added the ability to specify an alternative string when hiding the username in paths.
 
-### [1.2.2] - 2024-06-29
+### [1.2.2] - 2024/06/29
 
 #### Changed
 - Modified the command for go to directories to display the path in the description instead of the details.
 - Changed "Open this directory in Code" to open in the current window and added a button to open in a new window.
 
-### [1.2.1] - 2024-06-27
+### [1.2.1] - 2024/06/27
 
 #### Fixed
 - Fixed a bug the directory/file split display setting and the hidden file display setting sometimes wouldn't toggle properly.
@@ -126,7 +148,7 @@
 - Fixed a bug where filenames partially containing the username were also hidden when the `hideUserName` setting is true.
 
 
-### [1.2.0] - 2024-06-25
+### [1.2.0] - 2024/06/25
 
 #### Added
 - Added a function to jump to the base directory.
@@ -138,15 +160,15 @@
 - Fixed a bug where an error occurred when the display language was set to something other than ja/en.
 - Fixed an issue where settings for displaying directories and files separately, and showing hidden files, were unintentionally being written to the workspace settings.
 
-### [1.1.0] - 2024-06-12
+### [1.1.0] - 2024/06/12
 
 - Added English translation to the README.
 - Added a function that open the directory in VS Code.
 
-### [1.0.1] - 2024-06-11
+### [1.0.1] - 2024/06/11
 
 - Added icon.
 
-### [1.0.0] - 2024-06-11
+### [1.0.0] - 2024/06/11
 
 - Initial release.

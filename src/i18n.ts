@@ -396,18 +396,24 @@ function getLocalizedMessage(message: I18NText, localeKey: string, defaultValue:
 
 
 /**
- * 言語設定に対応する文字列を取得する。
- *
- * @param message 国際化文字列を格納した文字列リソース。
- * @param key i18nオブジェクト内の特定のキー。
- * @param values プレースホルダーを置き換えるためのオブジェクト。キーがプレースホルダー名、値が置き換え文字列。
- * @returns プレースホルダーが置き換えられたテキスト。
+ * 現在のロケールキーを取得する。
+ * @returns
  */
-export function i18n(message: I18NText, values: Record<string, string> = {}): string
+export function localeKey(): string
 {
-	// ロケールを取得
-	const localeKey = JSON.parse(<string>process.env.VSCODE_NLS_CONFIG).locale as string;
+	return JSON.parse(<string>process.env.VSCODE_NLS_CONFIG).locale as string;
+}
 
+
+
+
+
+
+
+
+
+function getI18nText(message: I18NText, localeKey: string, values: Record<string, string> = {}): string
+{
 	// ロケールに対応するメッセージを取得
 	const localizedText = getLocalizedMessage(message, localeKey, '');
 
@@ -422,6 +428,48 @@ export function i18n(message: I18NText, values: Record<string, string> = {}): st
 	{
 		return replacePlaceholders(localizedText, values);
 	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 言語設定を無視して、英語(en)に対応する文字列を取得する。
+ * @param message
+ * @param values
+ * @returns
+ */
+export function en(message: I18NText, values: Record<string, string> = {}): string
+{
+	return getI18nText(message, 'en', values);
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 言語設定に対応する文字列を取得する。
+ *
+ * @param message 国際化文字列を格納した文字列リソース。
+ * @param key i18nオブジェクト内の特定のキー。
+ * @param values プレースホルダーを置き換えるためのオブジェクト。キーがプレースホルダー名、値が置き換え文字列。
+ * @returns プレースホルダーが置き換えられたテキスト。
+ */
+export function t(message: I18NText, values: Record<string, string> = {}): string
+{
+	return getI18nText(message, localeKey(), values);
 }
 
 

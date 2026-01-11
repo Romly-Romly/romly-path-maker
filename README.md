@@ -27,6 +27,10 @@
 
 「パスを入力して移動」を選択すると、パスの直接入力モードとなり、設定されている基準ディレクトリと入力したパスで解決したディレクトリにあるファイル一覧を表示するようになります。求めているファイルやディレクトリがどこにあるかわかっているときに素早く指定できて便利です。
 
+### 必要条件
+
+* VSCode バージョン1.108.0以降
+
 ### 使い方
 
 拡張機能をインストールしたのち、コマンドパレットから`Romly Path Maker`などと入力して呼び出して下さい。
@@ -105,6 +109,10 @@ I assume it's common that you have to input file paths as command arguments in t
 ### Go to input path
 
 When you select "Go to input path", it activates the direct path input mode. This will display a list of files in the directory resolved by combining the set base directory with the path you input. It'd be convenient when you already know where the file or directory you're looking for is located, as it allows you to quickly specify the location.
+
+### Requirements
+
+* VSCode version 1.108.0 or later.
 
 ### How to Use
 

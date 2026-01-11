@@ -26,6 +26,7 @@ const CONFIG_KEY_SHOW_RELATIVE_ROUTE = 'showRelativeRoute';
 const CONFIG_KEY_PATH_PRESENTATION = 'pathPresentation';
 const CONFIG_KEY_LAST_DIRECTORY = 'lastDirectory';
 const CONFIG_KEY_START_DIRECTORY = 'startDirectory';
+const CONFIG_KEY_IGNORE_INVALID_PATH = 'ignoreInvalidPaths';
 
 
 
@@ -270,11 +271,14 @@ export class RyConfiguration
 	 * 指定されたパスをリストに追加する。ただし既に追加されている場合は追加日を更新する。
 	 * @param path 追加するパス。
 	 * @param toList リストの種類を指定する。
-	 * @param maxListSize リストの最大サイズを指定する。既にリストがこのサイズ以上の場合は追加しない。0を指定した場合は必ず追加する。
+	 * @param maxListSize
 	 * @returns
 	 */
-	public static addToTheList(path: string, toList: RyListType, maxListSize: number = 0): Thenable<void>
+	public static addToTheList(path: string, toList: RyListType): Thenable<void>
 	{
+		// リストの最大サイズを指定する。既にリストがこのサイズ以上の場合は追加しない。0を指定した場合は必ず追加する。
+		const maxListSize = RyConfiguration.MAX_HISTORY_SIZE;
+
 		let list = RyConfiguration.getList(toList);
 
 		// リストの最大サイズを超えている場合は追加しない
@@ -366,5 +370,15 @@ export class RyConfiguration
 	{
 		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
 		return config.get<number>(pathItemsType) ?? (pathItemsType === RyPathItemsType.mixed ? 10 : 5);
+	}
+
+	/**
+	 * 無効なパスを無視する(表示しない)？
+	 * @returns
+	 */
+	public static getIgnoreInvalidPaths(): boolean
+	{
+		const config = vscode.workspace.getConfiguration(CONFIGURATION_NAME);
+		return config.get<boolean>(CONFIG_KEY_IGNORE_INVALID_PATH, true);
 	}
 }

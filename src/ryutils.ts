@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import { exec } from 'child_process';
 
 // 自前の言語設定の読み込み
-import { i18n, COMMON_TEXTS } from "./i18n";
+import * as i18n from "./i18n";
 
 
 
@@ -149,17 +149,17 @@ export function getOsDependentExplorerAppName(): string
 	if (process.platform === 'win32')
 	{
 		// Windows
-		return i18n(COMMON_TEXTS.windowsExplorer);
+		return i18n.t(i18n.COMMON_TEXTS.windowsExplorer);
 	}
 	else if (process.platform === 'darwin')
 	{
 		// Mac
-		return i18n(COMMON_TEXTS.macFinder);
+		return i18n.t(i18n.COMMON_TEXTS.macFinder);
 	}
 	else
 	{
 		// Linux
-		return i18n(COMMON_TEXTS.linuxFileManager);
+		return i18n.t(i18n.COMMON_TEXTS.linuxFileManager);
 	}
 }
 
@@ -185,7 +185,7 @@ export async function openFileInEdtor(fullPath: string)
 	}
 	catch (error)
 	{
-		vscode.window.showErrorMessage(i18n(COMMON_TEXTS.couldNotOpenFile) + `: ${error}`);
+		vscode.window.showErrorMessage(i18n.t(i18n.COMMON_TEXTS.couldNotOpenFile) + `: ${error}`);
 	}
 }
 
@@ -374,7 +374,7 @@ export class RyQPItemButton implements IRyQuickPickButton
  */
 export function showErrorMessageWithDetailChannel(errorMessage: string, extensionName: string, debugErrorMessage: string, error: Error | unknown)
 {
-	vscode.window.showErrorMessage(errorMessage, i18n(COMMON_TEXTS.showErrorDetailButtonCaption)).then(() =>
+	vscode.window.showErrorMessage(errorMessage, i18n.t(i18n.COMMON_TEXTS.showErrorDetailButtonCaption)).then(() =>
 	{
 		// エラー詳細を Output Channel に表示
 		const channel = vscode.window.createOutputChannel(extensionName);
@@ -392,4 +392,67 @@ export function showErrorMessageWithDetailChannel(errorMessage: string, extensio
 		}
 		channel.show();
 	});
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * パス文字列を指定文字数以内に省略します
+ * @param fullPath 完全なパス文字列
+ * @param maxLength 最大文字数
+ * @param keepStartDirs 先頭から最低限保持するディレクトリ数
+ * @param keepEndDirs 末尾から最低限保持するディレクトリ数(ファイル名含む)
+ * @returns 省略されたパス文字列
+ */
+export function shortenPath(fullPath: string, maxLength: number, keepStartDirs: number = 1, keepEndDirs: number = 2): string
+{
+	if (fullPath.length <= maxLength)
+	{
+		return fullPath;
+	}
+
+	const separator = fullPath.includes('/') ? '/' : '\\';
+	const parts = fullPath.split(separator);
+
+	// 保持する先頭部分と末尾部分を取得
+	const startParts = parts.slice(0, keepStartDirs);
+	const endParts = parts.slice(-keepEndDirs);
+
+	// 最低限の省略形を作成
+	const minimalPath = [...startParts, '...', ...endParts].join(separator);
+
+	if (minimalPath.length <= maxLength)
+	{
+		// 余裕があれば中間部分も追加
+		const middleParts = parts.slice(keepStartDirs, -keepEndDirs);
+
+		for (let i = 0; i < middleParts.length; i++)
+		{
+			const testParts = [...startParts, ...middleParts.slice(0, i + 1), '...', ...endParts];
+			const testPath = testParts.join(separator);
+
+			if (testPath.length > maxLength)
+			{
+				// 1つ前までが限界
+				if (i === 0)
+				{
+					return minimalPath;
+				}
+				const finalParts = [...startParts, ...middleParts.slice(0, i), '...', ...endParts];
+				return finalParts.join(separator);
+			}
+		}
+
+		// 全部入る場合
+		return fullPath;
+	}
+
+	return minimalPath;
 }

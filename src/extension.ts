@@ -8,12 +8,11 @@ import * as path from 'path';
 // 自前のユーティリティ
 import * as ryutils from './ryutils';
 
-import { RyPath } from './ryQuickPickBase';
-import { MyQuickPick, RyCertainListQuickPick } from './myQuickPick';
-import { i18n, I18NText } from './i18n';
+import { RyPath } from './ryPath';
+import * as i18n from "./i18n";
 import { MESSAGES } from './i18nTexts';
 import { RyConfiguration, RyListType } from './ryConfiguration';
-
+import { MyQuickPick, RyCertainListQuickPick } from './myQuickPick';
 
 
 
@@ -82,10 +81,8 @@ function ensureAbsolutePath(inputPath: string): string
  * 表示する最初のディレクトリを取得する。
  * 優先順にワークスペースのディレクトリ → エディタのディレクトリ → ユーザーディレクトリ。
  */
-function getStartDirectory(): string
+function getStartDirectory(startDirectory: string): string
 {
-	const startDirectory = RyConfiguration.getStartDirectory();
-
 	// 共通のフォールバックディレクトリ
 	const fallbackDir = os.homedir();
 
@@ -132,16 +129,16 @@ function getStartDirectory(): string
 // コマンドが初めて実行されたときに拡張機能が有効化される
 export function activate(context: vscode.ExtensionContext)
 {
-	function showList(listType: RyListType, noItemMsg: I18NText): void
+	function showList(listType: RyListType, noItemMsg: i18n.I18NText): void
 	{
-		const quickPick = new RyCertainListQuickPick(listType);
+		const quickPick = new RyCertainListQuickPick(listType, RyConfiguration.getBaseDirectory());
 		if (quickPick.numItems > 0)
 		{
 			quickPick.show();
 		}
 		else
 		{
-			vscode.window.showInformationMessage(i18n(noItemMsg));
+			vscode.window.showInformationMessage(i18n.t(noItemMsg));
 		}
 	}
 
@@ -150,16 +147,25 @@ export function activate(context: vscode.ExtensionContext)
 	// commandId パラメータは package.json の command フィールドと一致する必要がある
 	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.show', () =>
 	{
-		const startPath = RyPath.createFromString(getStartDirectory());
-		const quickPick = new MyQuickPick(startPath);
+		const startDir = getStartDirectory(RyConfiguration.getStartDirectory());
+		const quickPick = new MyQuickPick(RyPath.createFromString(startDir), RyConfiguration.getBaseDirectory());
 		quickPick.show();
 	}));
 
-	// お気に入り表示コマンド
+	// ワークスペースのディレクトリを表示するコマンドの登録
+	// このコマンドでは常にワークスペースのディレクトリが表示され、基準ディレクトリもワークスペースになる
+	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showWorkspace', () =>
+	{
+		const startDir = getStartDirectory('Workspace');
+		const quickPick = new MyQuickPick(RyPath.createFromString(startDir), startDir);
+		quickPick.show();
+	}));
+
+	// お気に入り表示コマンドの登録
 	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showFavorites', () =>
 		showList(RyListType.favorite, MESSAGES.noFavorites)));
 
-	// 履歴表示コマンド
+	// 履歴表示コマンドの登録
 	context.subscriptions.push(vscode.commands.registerCommand('romly-path-maker.showHistory', () =>
 		showList(RyListType.history, MESSAGES.noHistory)));
 }
