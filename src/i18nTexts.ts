@@ -195,6 +195,12 @@ class ProjectMessages
 		'zh-cn': "在{app}中显示此目录"
 	};
 
+	openThisDirectoryWithApp: I18NText =
+	{
+		ja: 'このディレクトリを {app} で開く',
+		en: 'Open this directory with {app}',
+	};
+
 	'error.directoryNotFound': I18NText =
 	{
 		ja: 'ディレクトリ {dir} は存在しません。',

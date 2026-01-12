@@ -1005,7 +1005,16 @@ export class RyErrorPathQPItem extends RyPathQPItem
 
 
 
-export enum RyPathAction { copyToClipboard, insertToEditor, insertToTermnal, addToFavorite, removeFromFavorite, addToPinned, removeFromPinned, openInEditor };
+export enum RyPathAction {
+	copyToClipboard,
+	insertToEditor,
+	insertToTermnal,
+	addToFavorite,
+	removeFromFavorite,
+	addToPinned,
+	removeFromPinned,
+	openInEditor
+};
 
 export class RyPathActionQPItem extends RyPathQPItem
 {

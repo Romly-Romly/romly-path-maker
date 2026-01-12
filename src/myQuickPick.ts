@@ -522,6 +522,12 @@ export class MyQuickPick extends RyQuickPickBase
 		// このディレクトリをピン留め
 		result.push(new RyPathActionQPItem(this, this._path, isItemInTheList(this._path, RyListType.pinned) ? RyPathAction.removeFromPinned : RyPathAction.addToPinned));
 
+		// このディレクトリをGitKrakenで開く
+		if (MyOpenInGitKrakenQPItem.isSupported)
+		{
+			result.push(new MyOpenInGitKrakenQPItem(this, this._path));
+		}
+
 		return result;
 	}
 
@@ -1011,6 +1017,49 @@ class MyQuickPickRevealInExprolerItem extends RyQuickPickItem
 	{
 		// ディレクトリを開く
 		openDirectory(this._path);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 「このディレクトリをGitKrakenで開く」コマンドの QuickPickItem。
+ */
+class MyOpenInGitKrakenQPItem extends RyQuickPickItem
+{
+	private _path: RyPath;
+
+	constructor(aQuickPick: RyQuickPickBase, aPath: RyPath)
+	{
+		super(aQuickPick);
+		this.label = `${COMMAND_LABEL_PREFIX} $(github) ` + i18n.en(MESSAGES.openThisDirectoryWithApp, { app: 'GitKraken' });
+		this.description = i18n.localeKey() !== 'en' ? i18n.t(MESSAGES.openThisDirectoryWithApp, { app: 'GitKraken' }) : '';
+		this._path = aPath;
+	}
+
+	override didAccept(): void
+	{
+		// ディレクトリ GitKraken で開く
+		ryutils.openWithGitKraken(this._path.fullPath);
+
+		this.ownerQuickPick.hide();
+	}
+
+	/**
+	 * 現状の環境で GitKraken を開くがサポートされているか。
+	 * とりまOSしか見てない(GitKraken がインストールされているかは見てない)
+	 */
+	static get isSupported(): boolean
+	{
+		// Windows/Macのみ対応
+		return process.platform === 'win32' || process.platform === 'darwin';
 	}
 }
 

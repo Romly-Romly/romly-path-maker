@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as os from 'os';
 import { exec } from 'child_process';
 
 // 自前の言語設定の読み込み
@@ -218,6 +219,111 @@ export function openDirectory(path: string): void
 	{
 		// Linuxの場合、nautilusでディレクトリを開く（デフォルトのファイルマネージャを使用）
 		exec(`nautilus "${path}"`);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * Windowsで、アプリを指定した引数（ファイルパスなど）付きで起動する。
+ * @param execPath アプリの実行パス
+ * @param targetPath 開きたいファイルやフォルダのパス
+ */
+function launchApplicationViaTerminal(execPath: string, targetPath: string): void
+{
+	// ユーザーの目には見えない、起動専用のターミナルを作成
+	const terminal = vscode.window.createTerminal({
+		name: "App Launcher",
+		hideFromUser: true // ユーザーから隠すフラグ
+	});
+
+	// 「ファイル名を指定して実行」と同じコマンドを送る。
+	// & をつけることで、アプリを起動した後にターミナルを即座に解放する。
+	const command = `& "${execPath}" ${targetPath}`;
+
+	terminal.sendText(command);
+
+	// 念の為、少し(5秒)待ってから解放
+	setTimeout(() =>
+	{
+		terminal.dispose();
+	}, 5000);
+}
+
+
+
+
+
+
+
+
+
+
+async function launchMacViaApi(scheme: string, authority: string, path: string): Promise<void>
+{
+	// ファイルパスをURL形式に変換
+	// 例: gitkraken://repo/c/path/to/repo
+	const uri = vscode.Uri.parse(`${scheme}://${authority}/${path}`);
+
+	try
+	{
+		await vscode.env.openExternal(uri);
+	}
+	catch (e)
+	{
+		console.log(`vscode.env.openExternal(${uri}) failed. Error: ${e}`);
+	}
+}
+
+
+
+
+
+
+
+
+
+
+/**
+ * 指定されたパスを GitKraken で開く
+ * @param repoPath
+ */
+export function openWithGitKraken(repoPath: string): void
+{
+	let appPath: string;
+
+	if (process.platform === 'darwin')
+	{
+		launchMacViaApi('gitkraken', 'repo', repoPath);
+	}
+	else if (process.platform === 'win32')
+	{
+		// GitKraken の実行ファイルのパスを構築
+		// GitKraken はなぜか gitkraken.exe じゃなくて update.exe なんだよなー
+
+		// ちなみに GitKraken の起動コマンドはこんな感じ。
+		// レジストリエディタで コンピューター\HKEY_CLASSES_ROOT\Directory\shell\GitKraken\command にあるよ。
+		// "C:\Users\<username>\AppData\Local\gitkraken\update.exe" --processStart=gitkraken.exe --process-start-args="-p \"%1\""
+		const homeDir = os.homedir();
+		appPath = path.join(homeDir, 'AppData', 'Local', 'gitkraken', 'update.exe');
+		const options = `--processStart=gitkraken.exe --process-start-args="-p ${repoPath.replace(/"/g, '\\"')}"`;
+		launchApplicationViaTerminal(appPath, options);
+	}
+	else if (process.platform === 'linux')
+	{
+		// Linuxはとりま未対応
+		// appPath = '/usr/bin/gitkraken'; // Linuxでの一般的なインストール先
+	}
+	else
+	{
+		throw new Error(`Unsupported platform: ${process.platform}`);
 	}
 }
 

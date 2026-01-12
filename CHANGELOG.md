@@ -4,6 +4,10 @@
 
 [English version below](#english英語)
 
+### [2.1.1] - 2026/01/13
+
+- ディレクトリをGitKrakenで開く機能を追加。
+
 ### [2.1.0] - 2026/01/12
 
 #### 追加
@@ -94,6 +98,10 @@
 ## English(英語)
 
 [日本語版(Japanese version above)はこちら](#日本語japanese)
+
+### [2.1.1] - 2026/01/13
+
+- Added feature to open directory in GitKraken.
 
 ### [2.1.0] - 2026/01/12
 
