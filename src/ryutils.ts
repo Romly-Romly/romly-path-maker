@@ -129,6 +129,9 @@ export function sendTextToTerminal(text: string)
 	if (text && vscode.window.activeTerminal)
 	{
 		vscode.window.activeTerminal.sendText(`${text}`, false);
+
+		// フォーカスを移さないとエディタにフォーカスが映ってしまう
+		vscode.window.activeTerminal.show();
 	}
 }
 
@@ -145,22 +148,32 @@ export function sendTextToTerminal(text: string)
  * OSと言語に応じたエクスプローラーの名前を返す。
  * @returns OSに応じたエクスプローラーの名前。Windowsなら エクスプローラー(Explorer)、Macなら日英ともにFinder、LinuxならFileManager
  */
-export function getOsDependentExplorerAppName(): string
+export function getOsDependentExplorerAppName(forceEnglish: boolean = false): string
 {
+	let key;
 	if (process.platform === 'win32')
 	{
 		// Windows
-		return i18n.t(i18n.COMMON_TEXTS.windowsExplorer);
+		key = i18n.COMMON_TEXTS.windowsExplorer;
 	}
 	else if (process.platform === 'darwin')
 	{
 		// Mac
-		return i18n.t(i18n.COMMON_TEXTS.macFinder);
+		key = i18n.COMMON_TEXTS.macFinder;
 	}
 	else
 	{
 		// Linux
-		return i18n.t(i18n.COMMON_TEXTS.linuxFileManager);
+		key = i18n.COMMON_TEXTS.linuxFileManager;
+	}
+
+	if (forceEnglish)
+	{
+		return i18n.en(key);
+	}
+	else
+	{
+		return i18n.t(key);
 	}
 }
 

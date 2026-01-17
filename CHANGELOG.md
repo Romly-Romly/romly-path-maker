@@ -4,6 +4,13 @@
 
 [English version below](#english英語)
 
+### [2.1.2] - 2026/01/17
+
+- ファイルのアクションメニューで「戻る」が機能していなかった不具合を修正。
+- ターミナルにパスを挿入した時にターミナルにフォーカスを移すよう変更。
+- 絶対パス／相対パスモードを切り替えた時に現在の入力をクリアするよう変更。
+- 英語以外の環境で「Reveal this directory in エクスプローラー」のように言語が混在していた不具合を修正。
+
 ### [2.1.1] - 2026/01/13
 
 - ディレクトリをGitKrakenで開く機能を追加。
@@ -98,6 +105,13 @@
 ## English(英語)
 
 [日本語版(Japanese version above)はこちら](#日本語japanese)
+
+### [2.1.2] - 2026/01/17
+
+- Fixed a bug where "Back" was not working in the file action menu.
+- Changed to move focus to the terminal when inserting a path into the terminal.
+- Changed to clear the current input when switching between absolute/relative path modes.
+- Fixed a bug where languages were mixed, such as "Reveal this directory in エクスプローラー" in non-English environments.
 
 ### [2.1.1] - 2026/01/13
 

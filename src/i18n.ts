@@ -70,7 +70,7 @@ class COMMON_TEXTS_CLASS
 	windowsExplorer: I18NText =
 	{
 		ja: 'エクスプローラー',
-		en: 'File Explorer',
+		en: 'Explorer',
 		fr: "l'Explorateur",
 		'zh-cn': '文件资源管理器'
 	};
